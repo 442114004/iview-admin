@@ -39,16 +39,22 @@
       @on-ok="okModal"
     >
       <Form :model="formItem" :label-width="80">
-        <FormItem label="Input">
-          <Input v-model="formItem.input" placeholder="Enter something..."></Input>
-        </FormItem>
-        <FormItem label="Select">
-          <Select v-model="formItem.select">
-            <Option value="beijing">New York</Option>
-            <Option value="shanghai">London</Option>
-            <Option value="shenzhen">Sydney</Option>
-          </Select>
-        </FormItem>
+        <Row>
+          <Col span="12">
+            <FormItem label="Input">
+              <Input v-model="formItem.input" placeholder="Enter something..."></Input>
+            </FormItem>
+          </Col>
+          <Col span="12">
+            <FormItem label="Select">
+              <Select v-model="formItem.select">
+                <Option value="beijing">New York</Option>
+                <Option value="shanghai">London</Option>
+                <Option value="shenzhen">Sydney</Option>
+              </Select>
+            </FormItem>
+          </Col>
+        </Row>
         <FormItem label="DatePicker">
           <Row>
             <Col span="11">
