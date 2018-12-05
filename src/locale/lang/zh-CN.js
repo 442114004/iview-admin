@@ -1,4 +1,5 @@
 export default {
+  login: '登录',
   home: '首页',
   components: '组件',
   count_to_page: '数字渐变',
