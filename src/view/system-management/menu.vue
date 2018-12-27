@@ -1,9 +1,9 @@
 <template>
   <management
-    ref="organization"
+    ref="menu"
     :tableColumns="tableColumns"
-    :data="{ tree: '/api/org/list', table: '/api/org/list' }"
-    page-name="组织结构"
+    :data="{table: '/api/menu/list' }"
+    page-name="菜单管理"
     add-button
     refresh-button
     @submit="submit"
@@ -129,12 +129,13 @@
 import management from "_c/management";
 import { getInfo, setActivated } from "@/api/system-management";
 export default {
-  name: "organization",
+  name: "menu",
   components: {
     management
   },
   data() {
     return {
+      url: "/api/org/",
       modalForm: {
         name: "",
         address: "",
@@ -254,10 +255,6 @@ export default {
                       this.edit(row);
                     }
                   },
-                  directives: [{
-                    name: 'permission',
-                    value: 'org_edit'
-                  }],
                   style: {
                     marginRight: "10px"
                   }
@@ -308,6 +305,7 @@ export default {
     };
   },
   methods: {
+    state() {},
     submit(pid, request) {
       // 添加和保存时，参数的处理
       let param = Object.assign({}, this.modalForm);
@@ -344,14 +342,14 @@ export default {
     },
     changeActivated(row, value) {
       row.activated = value;
-      this.$set(row, 'activated_loading', true);
-      setActivated('/api/org/', row)
+      row.activated_loading = true;
+      setActivated(this.url, row)
         .then(() => {
-          this.$set(row, 'activated_loading', false);
+          row.activated_loading = false;
         })
         .catch(error => {
           row.activated = !value;
-          this.$set(row, 'activated_loading', false);
+          row.activated_loading = false;
           this.$Notice.error({
             title: "状态修改失败",
             desc: error

@@ -1,9 +1,10 @@
 <template>
   <management
-    ref="role"
-    :tableColumns="tableColumns"
-    :data="{table: '/api/role/list' }"
-    page-name="角色"
+    style="background-color: white; height: 100%;"
+    ref="admin"
+    :tableColumns="columns1"
+    :data="{table: '/api/admin/list' }"
+    page-name="管理员"
     add-button
     refresh-button
     @submit="submit"
@@ -11,28 +12,29 @@
     @refresh="search"
   >
     <Form
+      ref="searchForm"
       :model="searchForm"
       inline
       :label-width="80"
-      ref="searchForm"
       slot="searchForm"
     >
       <FormItem
-        prop="name"
-        label="角色名称"
+        prop="username"
+        label="管理员名称"
       >
-        <i-input
+        <Input
           type="text"
-          v-model="searchForm.name"
-          placeholder="输入角色名称搜索"
-          style="width: 162px;"
-        />
+          v-model="searchForm.username"
+          placeholder="输入管理员名称搜索"
+        >
+        </Input>
       </FormItem>
       <FormItem>
         <Button
           type="primary"
+          icon="md-search"
           @click="search"
-        >查询</Button>
+        >搜索</Button>
         <Button
           @click="$refs.searchForm.resetFields()"
           style="margin-left: 8px"
@@ -40,40 +42,58 @@
       </FormItem>
     </Form>
     <Form
-      :model="searchForm"
-      inline
+      :model="modalForm"
       :label-width="80"
+      :rules="modalRules"
       ref="modalForm"
       slot="modalForm"
     >
       <FormItem
-        label="角色名称"
-        prop="name"
+        label="管理员名称"
+        prop="username"
       >
         <i-input
-          type="text"
-          v-model="modalForm.name"
-          placeholder="角色名称"
-          style="width: 162px;"
-        />
+          v-model="modalForm.username"
+          placeholder="管理员名称"
+        ></i-input>
       </FormItem>
       <FormItem
-        label="角色描述"
-        prop="description"
+        label="邮箱"
+        prop="email"
       >
         <i-input
-          type="text"
-          v-model="modalForm.description"
-          placeholder="角色名称"
-          style="width: 162px;"
-        />
+          v-model="modalForm.email"
+          placeholder="字典描述"
+        ></i-input>
       </FormItem>
-      <FormItem prop="activated" label="状态">
-            <RadioGroup v-model="modalForm.activated">
-              <Radio :label="1">启用</Radio>
-              <Radio :label="0">停用</Radio>
-            </RadioGroup>
-          </FormItem>
+      <FormItem
+        label="手机号码"
+        prop="mobile"
+      >
+        <i-input
+          v-model="modalForm.mobile"
+          placeholder="手机号码"
+        ></i-input>
+      </FormItem>
+      <FormItem
+        label="字典值"
+        prop="value"
+      >
+        <i-input
+          v-model="modalForm.value"
+          placeholder="类型描述"
+        ></i-input>
+      </FormItem>
+      <FormItem
+        label="备注"
+        prop="remark"
+      >
+        <i-input
+          v-model="modalForm.remark"
+          type="textarea"
+          placeholder="备注"
+        ></i-input>
+      </FormItem>
     </Form>
   </management>
 </template>
@@ -82,38 +102,26 @@
 import management from "_c/management";
 import { getInfo, setActivated } from "@/api/system-management";
 export default {
-  name: "role",
+  name: "admin",
   components: {
     management
   },
   data() {
     return {
       searchForm: {
-        name: ""
+        username: ""
       },
-      tableColumns: [
+      columns1: [
         {
-          title: "id",
-          key: "id",
-          minWidth: 80,
+          title: "管理员名称",
+          key: "username",
+          width: 220,
           tooltip: true
         },
         {
-          title: "角色名",
-          key: "name",
-          minWidth: 80,
-          tooltip: true
-        },
-        {
-          title: "角色描述",
-          key: "description",
-          minWidth: 100,
-          tooltip: true
-        },
-        {
-          title: "角色编号",
-          key: "roleNo",
-          minWidth: 100,
+          title: "邮箱",
+          key: "email",
+          width: 320,
           tooltip: true
         },
         {
@@ -126,9 +134,15 @@ export default {
           }
         },
         {
-          title: "权限",
+          title: "创建人",
           key: "createdBy",
           minWidth: 80,
+          tooltip: true
+        },
+        {
+          title: "创建时间",
+          key: "createdDate",
+          minWidth: 100,
           tooltip: true
         },
         {
@@ -150,7 +164,7 @@ export default {
           tooltip: true
         },
         {
-          title: "操作",
+          title: "Action",
           key: "action",
           fixed: "right",
           width: 200,
@@ -183,7 +197,7 @@ export default {
                   },
                   on: {
                     click: () => {
-                      this.$refs.role.delete(row);
+                      this.delete(row);
                     }
                   },
                   style: {
@@ -215,49 +229,53 @@ export default {
           }
         }
       ],
-      modalForm:{
-        activated:"",
-        createdBy: "",
+      modalForm: {
+        activated: '',
+        avatar: "",
+        createdBy: 0,
         createdDate: "",
         deleted: false,
-        description: "",
-        id: null,
-        lastModifiedBy: "",
+        email: "",
+        firstName: "",
+        gender: "",
+        id: 0,
+        lastLoginTime: "",
+        lastModifiedBy: 0,
         lastModifiedDate: "",
-        menus: {},
-        name: "",
+        lastName: "",
+        mobile: "",
+        orgs: [],
+        password: "",
         remark: "",
-        roleNo: "",
+        resetDate: "",
+        status: "",
+        username: ""
+      },
+      modalRules:{
+
       }
     };
   },
   methods: {
-    search() {
-      // 查询时，处理查询参数
-      const param = Object.assign({}, this.searchForm);
-      for (let i in param) {
-        param[i] === "" && delete param[i];
-      }
-      this.$refs.role.setTableData(param);
-    },
+    state() {},
     submit(pid, request) {
       // 添加和保存时，参数的处理
       let param = Object.assign({}, this.modalForm);
       param.activated = !!param.activated;
       param.pid = pid;
-      request("/api/role/", param, param.id ? "put" : "post");
+      request("/api/admin/", param, param.id ? "put" : "post");
     },
     deleteRow(request) {
-      request("/api/role/");
+      request("/api/admin/");
     },
     edit({ id }) {
       // 编辑时，表单的回显
-      getInfo("/api/role/info/" + id)
+      getInfo("/api/admin/info/" + id)
         .then(data => {
           Object.assign(this.modalForm, data, {
             activated: data.activated ? 1 : 0
           });
-          this.$refs.organization.edit();
+          this.$refs.admin.edit();
         })
         .catch(error => {
           this.$Notice.error({
@@ -266,16 +284,24 @@ export default {
           });
         });
     },
+    search() {
+      // 查询时，处理查询参数
+      const param = Object.assign({}, this.searchForm);
+      for (let i in param) {
+        param[i] === "" && delete param[i];
+      }
+      this.$refs.admin.setTableData(param);
+    },
     changeActivated(row, value) {
       row.activated = value;
-      this.$set(row, "activated_loading", true);
-      setActivated("/api/role/", row)
+      row.activated_loading = true;
+      setActivated('/api/adim/', row)
         .then(() => {
-          this.$set(row, "activated_loading", false);
+          row.activated_loading = false;
         })
         .catch(error => {
           row.activated = !value;
-          this.$set(row, "activated_loading", false);
+          row.activated_loading = false;
           this.$Notice.error({
             title: "状态修改失败",
             desc: error

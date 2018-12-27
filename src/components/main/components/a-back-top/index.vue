@@ -9,7 +9,7 @@
 </template>
 <script>
 import { scrollTop } from '@/libs/util'
-import { on, off } from '@/libs/tools'
+import { on, off } from '@/libs/util'
 const prefixCls = 'ivu-back-top'
 
 export default {

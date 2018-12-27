@@ -3,86 +3,106 @@ import {
   logout,
   getUserInfo
 } from '@/api/user'
-import { setToken, getToken } from '@/libs/util'
+import {
+  setToken,
+  getToken,
+  setMenu,
+  getMenu,
+  formatMenu
+} from '@/libs/util'
 
 export default {
   state: {
     userName: '',
     userId: '',
+    gender: '',
     avatorImgPath: '',
     token: getToken(),
-    access: '',
-    hasGetInfo: false
+    hasGetInfo: false,
+    menu: getMenu()
   },
   mutations: {
-    setAvator (state, avatorPath) {
+    setAvator(state, avatorPath) {
       state.avatorImgPath = avatorPath
     },
-    setUserId (state, id) {
+    setGender(state, gender) {
+      state.gender = gender
+    },
+    setUserId(state, id) {
       state.userId = id
     },
-    setUserName (state, name) {
+    setUserName(state, name) {
       state.userName = name
     },
-    setAccess (state, access) {
-      state.access = access
-    },
-    setToken (state, token) {
+    setToken(state, token) {
       state.token = token
       setToken(token)
     },
-    setHasGetInfo (state, status) {
+    setHasGetInfo(state, status) {
       state.hasGetInfo = status
     }
   },
   getters: {
-    
+
   },
   actions: {
     // 登录
-    handleLogin ({ commit }, {userName, password}) {
+    handleLogin({
+      state,
+      commit
+    }, {
+      userName,
+      password,
+      code,
+      uniqueId
+    }) {
       userName = userName.trim()
       return new Promise((resolve, reject) => {
         login({
           userName,
-          password
+          password,
+          code,
+          uniqueId
         }).then(res => {
-          const data = res.data
-          commit('setToken', data.token)
+          commit('setToken', res.token)
+          setMenu(res.data)
+          state.menu = formatMenu(res.data)
           resolve()
         }).catch(err => {
+          commit('setToken', '')
           reject(err)
         })
       })
     },
     // 退出登录
-    handleLogOut ({ state, commit }) {
+    handleLogOut({
+      state,
+      commit
+    }) {
       return new Promise((resolve, reject) => {
         logout(state.token).then(() => {
           commit('setToken', '')
-          commit('setAccess', [])
           resolve()
         }).catch(err => {
+          commit('setToken', '')
           reject(err)
         })
-        // 如果你的退出登录无需请求接口，则可以直接使用下面三行代码而无需使用logout调用接口
-        // commit('setToken', '')
-        // commit('setAccess', [])
-        // resolve()
       })
     },
     // 获取用户相关信息
-    getUserInfo ({ state, commit }) {
+    getUserInfo({
+      state,
+      commit
+    }) {
       return new Promise((resolve, reject) => {
         try {
           getUserInfo(state.token).then(res => {
-            const data = res.data
-            commit('setAvator', data.avator)
-            commit('setUserName', data.name)
-            commit('setUserId', data.user_id)
-            commit('setAccess', data.access)
+            commit('setAvator', res.avator)
+            commit('setUserName', res.username)
+            commit('setUserId', res.id)
+            commit('setGender', res.gender.label)
             commit('setHasGetInfo', true)
-            resolve(data)
+            resolve(res)
           }).catch(err => {
             reject(err)
           })

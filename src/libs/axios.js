@@ -1,61 +1,83 @@
+import iView from 'iview'
 import axios from 'axios'
-// import { Spin } from 'iview'
+import router from '../router'
+import store from '../store/'
 
 class HttpRequest {
-  constructor (baseUrl = baseURL) {
+  constructor(baseUrl = '') {
     this.baseUrl = baseUrl
-    this.queue = {}
+    this.queue = []
   }
-  getInsideConfig () {
+  getInsideConfig(options) {
     const config = {
       baseURL: this.baseUrl,
+      timeout: options.timeout || 5000,
       headers: {
-        //
+        Authorization: store.state.user.token
       }
     }
-    return config
+    return Object.assign(config, options)
   }
-  destroy (url) {
-    delete this.queue[url]
-    if (!Object.keys(this.queue).length) {
-      // Spin.hide()
+  destroy(url) {
+    this.queue.splice(this.queue.findIndex(item => item === url), 1)
+    if (!this.queue.length) {
+      iView.Spin.hide()
     }
   }
-  interceptors (instance, url) {
+  interceptors(instance, {
+    url,
+    loading = false
+  }) {
     // 请求拦截
     instance.interceptors.request.use(config => {
       // 添加全局的loading...
-      if (!Object.keys(this.queue).length) {
-        // Spin.show() // 不建议开启，因为界面不友好
+      if (loading && !this.queue.length) {
+        iView.Spin.show()
       }
-      this.queue[url] = true
+      loading && (this.queue.push(url))
       return config
     }, error => {
       return Promise.reject(error)
     })
     // 响应拦截
-    instance.interceptors.response.use(res => {
+    instance.interceptors.response.use(({
+      data,
+      status,
+      headers
+    }) => {
       this.destroy(url)
-      const { data, status } = res
-      return { data, status }
+      // 请求成功处理（包括后台异常）
+      if (status === 200 && data.success && data.data) {
+        if (url === '/api/login') {
+          data.data = { data: data.data, token: headers.authorization }
+        }
+        return data.data
+      } else {
+        return Promise.reject(data.message || '数据异常，请联系管理员')
+      }
     }, error => {
       this.destroy(url)
-      let errorInfo = error.response
-      if (!errorInfo) {
-        const { request: { statusText, status }, config } = JSON.parse(JSON.stringify(error))
-        errorInfo = {
-          statusText,
-          status,
-          request: { responseURL: config.url }
+      // 请求出错处理
+      let message = error.message || '操作失败，请检查网络连接'
+      try {
+        if (error.response.status === 401) {
+          store.dispatch('handleLogOut').then(() => {
+            router.push({
+              name: 'login'
+            })
+          })
         }
+        message = error.response.data.message || message
+      } catch (e) {
+        console.error(e)
       }
-      return Promise.reject(error)
+      return Promise.reject(message || '未知错误，请联系管理员')
     })
   }
-  request (options) {
+  request(options) {
     const instance = axios.create()
-    options = Object.assign(this.getInsideConfig(), options)
-    this.interceptors(instance, options.url)
+    options = this.getInsideConfig(options)
+    this.interceptors(instance, options)
     return instance(options)
   }
 }

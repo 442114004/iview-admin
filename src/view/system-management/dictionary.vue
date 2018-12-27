@@ -1,9 +1,11 @@
 <template>
+  <!-- 字典管理 -->
   <management
-    ref="role"
-    :tableColumns="tableColumns"
-    :data="{table: '/api/role/list' }"
-    page-name="角色"
+    style="background-color: white; height: 100%; padding: 10px;"
+    ref="dictionary"
+    :tableColumns="columns1"
+    :data="{table: '/api/dictionary/list' }"
+    page-name="数据"
     add-button
     refresh-button
     @submit="submit"
@@ -11,28 +13,40 @@
     @refresh="search"
   >
     <Form
+      ref="searchForm"
       :model="searchForm"
       inline
       :label-width="80"
-      ref="searchForm"
       slot="searchForm"
     >
       <FormItem
-        prop="name"
-        label="角色名称"
+        prop="label"
+        label="字典名称"
       >
-        <i-input
+        <Input
           type="text"
-          v-model="searchForm.name"
-          placeholder="输入角色名称搜索"
-          style="width: 162px;"
-        />
+          v-model="searchForm.label"
+          placeholder="输入字典名称搜索"
+        >
+        </Input>
+      </FormItem>
+      <FormItem
+        prop="description"
+        label="字典描述"
+      >
+        <Input
+          type="text"
+          v-model="searchForm.description"
+          placeholder="输入字典描述搜索"
+        >
+        </Input>
       </FormItem>
       <FormItem>
         <Button
           type="primary"
+          icon="md-search"
           @click="search"
-        >查询</Button>
+        >搜索</Button>
         <Button
           @click="$refs.searchForm.resetFields()"
           style="margin-left: 8px"
@@ -40,40 +54,58 @@
       </FormItem>
     </Form>
     <Form
-      :model="searchForm"
-      inline
+      :model="modalForm"
       :label-width="80"
+      :rules="modalRules"
       ref="modalForm"
       slot="modalForm"
     >
       <FormItem
-        label="角色名称"
-        prop="name"
+        label="字典名称"
+        prop="label"
       >
         <i-input
-          type="text"
-          v-model="modalForm.name"
-          placeholder="角色名称"
-          style="width: 162px;"
-        />
+          v-model="modalForm.label"
+          placeholder="字典名称"
+        ></i-input>
       </FormItem>
       <FormItem
-        label="角色描述"
+        label="字典描述"
         prop="description"
       >
         <i-input
-          type="text"
           v-model="modalForm.description"
-          placeholder="角色名称"
-          style="width: 162px;"
-        />
+          placeholder="字典描述"
+        ></i-input>
       </FormItem>
-      <FormItem prop="activated" label="状态">
-            <RadioGroup v-model="modalForm.activated">
-              <Radio :label="1">启用</Radio>
-              <Radio :label="0">停用</Radio>
-            </RadioGroup>
-          </FormItem>
+      <FormItem
+        label="字典类型"
+        prop="type"
+      >
+        <i-input
+          v-model="modalForm.type"
+          placeholder="字典类型"
+        ></i-input>
+      </FormItem>
+      <FormItem
+        label="字典值"
+        prop="value"
+      >
+        <i-input
+          v-model="modalForm.value"
+          placeholder="类型描述"
+        ></i-input>
+      </FormItem>
+      <FormItem
+        label="备注"
+        prop="remark"
+      >
+        <i-input
+          v-model="modalForm.remark"
+          type="textarea"
+          placeholder="备注"
+        ></i-input>
+      </FormItem>
     </Form>
   </management>
 </template>
@@ -82,38 +114,61 @@
 import management from "_c/management";
 import { getInfo, setActivated } from "@/api/system-management";
 export default {
-  name: "role",
+  name: "dictionary",
   components: {
     management
   },
   data() {
     return {
       searchForm: {
-        name: ""
+        label: "",
+        description: ""
       },
-      tableColumns: [
+      modalForm: {
+        activated: "",
+        createdBy: 0,
+        createdDate: "",
+        deleted: "",
+        description: "",
+        dictGroup: "",
+        id: 0,
+        label: "",
+        lastModifiedBy: "",
+        lastModifiedDate: "",
+        remark: "",
+        sort: 0,
+        type: null,
+        value: null
+      },
+      modalRules: {
+        type: [{ required: true, message: "字典类型必须填写" }],
+        description: [{ required: true, message: "字典描述必须填写" }],
+        label: [{ required: true, message: "字典名称必须填写" }],
+        value: [{ required: true, message: "字典值必须填写" }]
+      },
+      columns1: [
         {
-          title: "id",
-          key: "id",
-          minWidth: 80,
+          title: "字典名称",
+          key: "label",
+          minWidth: 100,
           tooltip: true
         },
         {
-          title: "角色名",
-          key: "name",
-          minWidth: 80,
-          tooltip: true
-        },
-        {
-          title: "角色描述",
+          title: "字典描述",
           key: "description",
+          minWidth: 145,
+          tooltip: true
+        },
+        {
+          title: "字典类型",
+          key: "type",
           minWidth: 100,
           tooltip: true
         },
         {
-          title: "角色编号",
-          key: "roleNo",
-          minWidth: 100,
+          title: "字典值",
+          key: "value",
+          minWidth: 150,
           tooltip: true
         },
         {
@@ -126,9 +181,15 @@ export default {
           }
         },
         {
-          title: "权限",
-          key: "createdBy",
-          minWidth: 80,
+          title: "创建人",
+          key: "createBy",
+          minWidth: 100,
+          tooltip: true
+        },
+        {
+          title: "创建时间",
+          key: "createDate",
+          minWidth: 180,
           tooltip: true
         },
         {
@@ -140,20 +201,21 @@ export default {
         {
           title: "最后修改时间",
           key: "lastModifiedDate",
-          minWidth: 110,
+          minWidth: 180,
           tooltip: true
         },
         {
           title: "备注",
           key: "remark",
-          minWidth: 100,
+          minWidth: 200,
           tooltip: true
         },
         {
           title: "操作",
           key: "action",
           fixed: "right",
-          width: 200,
+          align: "center",
+          minWidth: 200,
           render: (h, { row }) => {
             return h("div", [
               h(
@@ -183,7 +245,7 @@ export default {
                   },
                   on: {
                     click: () => {
-                      this.$refs.role.delete(row);
+                      this.$refs.dictionary.delete(row);
                     }
                   },
                   style: {
@@ -214,50 +276,20 @@ export default {
             ]);
           }
         }
-      ],
-      modalForm:{
-        activated:"",
-        createdBy: "",
-        createdDate: "",
-        deleted: false,
-        description: "",
-        id: null,
-        lastModifiedBy: "",
-        lastModifiedDate: "",
-        menus: {},
-        name: "",
-        remark: "",
-        roleNo: "",
-      }
+      ]
     };
   },
   methods: {
-    search() {
-      // 查询时，处理查询参数
-      const param = Object.assign({}, this.searchForm);
-      for (let i in param) {
-        param[i] === "" && delete param[i];
-      }
-      this.$refs.role.setTableData(param);
-    },
-    submit(pid, request) {
-      // 添加和保存时，参数的处理
-      let param = Object.assign({}, this.modalForm);
-      param.activated = !!param.activated;
-      param.pid = pid;
-      request("/api/role/", param, param.id ? "put" : "post");
-    },
     deleteRow(request) {
-      request("/api/role/");
+      request("/api/dictionary/");
     },
     edit({ id }) {
-      // 编辑时，表单的回显
-      getInfo("/api/role/info/" + id)
+      getInfo("/api/dictionary/info/" + id)
         .then(data => {
           Object.assign(this.modalForm, data, {
             activated: data.activated ? 1 : 0
           });
-          this.$refs.organization.edit();
+          this.$refs.dictionary.edit();
         })
         .catch(error => {
           this.$Notice.error({
@@ -266,10 +298,24 @@ export default {
           });
         });
     },
+    submit(pid, request) {
+      // 添加和保存时，参数的处理
+      let param = Object.assign({}, this.modalForm);
+      param.activated = !!param.activated;
+      request("/api/dictionary/", param, param.id ? "put" : "post");
+    },
+    search() {
+      // 查询时，处理查询参数
+      const param = Object.assign({}, this.searchForm);
+      for (let i in param) {
+        param[i] === "" && delete param[i];
+      }
+      this.$refs.dictionary.setTableData(param);
+    },
     changeActivated(row, value) {
       row.activated = value;
       this.$set(row, "activated_loading", true);
-      setActivated("/api/role/", row)
+      setActivated("/api/dictionary/isActivated/", row)
         .then(() => {
           this.$set(row, "activated_loading", false);
         })
@@ -285,6 +331,3 @@ export default {
   }
 };
 </script>
-
-<style>
-</style>

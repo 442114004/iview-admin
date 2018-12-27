@@ -17,7 +17,7 @@ export default {
    * @description api请求基础路径
    */
   baseUrl: {
-    dev: 'https://www.easy-mock.com/mock/5add9213ce4d0e69998a6f51/iview-admin/',
+    dev: '',
     pro: 'https://produce.com'
   },
   /**
@@ -29,7 +29,7 @@ export default {
    */
   plugin: {
     'resize-window': {
-      timeout: 50 // 屏幕大小变化后延时处理时间
+      timeout: 5 // 屏幕大小变化后延时处理时间
     }
   }
 }

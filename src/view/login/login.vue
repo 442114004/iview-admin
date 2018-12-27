@@ -1,5 +1,5 @@
 <style lang="less">
-  @import './login.less';
+@import "./login.less";
 </style>
 
 <template>
@@ -7,8 +7,7 @@
     <div class="login-con">
       <Card icon="log-in" title="欢迎登录" :bordered="false">
         <div class="form-con">
-          <login-form @on-success-valid="handleSubmit"></login-form>
-          <p class="login-tip">输入任意用户名和密码即可</p>
+          <login-form @on-success-valid="handleSubmit" :error="loginError"></login-form>
         </div>
       </Card>
     </div>
@@ -16,30 +15,44 @@
 </template>
 
 <script>
-import LoginForm from '_c/login-form'
-import { mapActions } from 'vuex'
+import LoginForm from "_c/login-form";
+import { mapActions } from "vuex";
 export default {
   components: {
     LoginForm
   },
+  data() {
+    return {
+      loginError: ''
+    }
+  },
   methods: {
-    ...mapActions([
-      'handleLogin',
-      'getUserInfo'
-    ]),
-    handleSubmit ({ userName, password }) {
-      this.handleLogin({ userName, password }).then(res => {
-        this.getUserInfo().then(res => {
+    ...mapActions(["handleLogin", "getUserInfo"]),
+    handleSubmit({ userName, password, code, uniqueId, callback }) {
+      this.loginError = ''
+      this.handleLogin({ userName, password, code, uniqueId }).then(() => {
+        // 还需要查询后台菜单栏，存到store里面
+        this.getUserInfo().then(() => {
           this.$router.push({
             name: this.$config.homeName
-          })
-        })
-      })
+          });
+          callback()
+        }).catch(error => {
+          setTimeout(() => {
+            this.loginError = error
+            callback()
+          }, 500)
+        });
+      }).catch(error => {
+        setTimeout(() => {
+          this.loginError = error
+          callback()
+        }, 500)
+      });
     }
   }
-}
+};
 </script>
 
 <style>
-
 </style>

@@ -1,30 +1,41 @@
 import axios from '@/libs/api.request'
 
-export const login = ({ userName, password }) => {
+export const login = ({
+  userName,
+  password,
+  code,
+  uniqueId
+}) => {
   const data = {
-    userName,
-    password
+    username: userName,
+    password,
+    captcha: code,
+    captchaKey: uniqueId
   }
   return axios.request({
-    url: 'login',
+    url: '/api/login',
     data,
     method: 'post'
   })
 }
 
-export const getUserInfo = (token) => {
+export const getUserInfo = () => {
   return axios.request({
-    url: 'get_info',
-    params: {
-      token
-    },
+    url: '/api/current-admin',
     method: 'get'
   })
 }
 
-export const logout = (token) => {
+export const logout = () => {
   return axios.request({
-    url: 'logout',
-    method: 'post'
+    url: '/api/logout',
+    method: 'delete'
+  })
+}
+
+export const getUniqueId = () => {
+  return axios.request({
+    url: '/api/unique-id',
+    method: 'get'
   })
 }
