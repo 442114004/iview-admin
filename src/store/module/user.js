@@ -8,8 +8,11 @@ import {
   getToken,
   setMenu,
   getMenu,
+  setPermissions,
+  getPermissions,
   formatMenu
 } from '@/libs/util'
+import router from '@/router'
 
 export default {
   state: {
@@ -19,7 +22,9 @@ export default {
     avatorImgPath: '',
     token: getToken(),
     hasGetInfo: false,
-    menu: getMenu()
+    superAdmin: false,
+    menu: getMenu(),
+    permissions: getPermissions()
   },
   mutations: {
     setAvator(state, avatorPath) {
@@ -34,6 +39,9 @@ export default {
     setUserName(state, name) {
       state.userName = name
     },
+    setSuperAdmin(state, superAdmin) {
+      state.superAdmin = superAdmin
+    },
     setToken(state, token) {
       state.token = token
       setToken(token)
@@ -42,14 +50,12 @@ export default {
       state.hasGetInfo = status
     }
   },
-  getters: {
-
-  },
   actions: {
     // 登录
     handleLogin({
       state,
-      commit
+      commit,
+      getters
     }, {
       userName,
       password,
@@ -65,8 +71,12 @@ export default {
           uniqueId
         }).then(res => {
           commit('setToken', res.token)
-          setMenu(res.data)
-          state.menu = formatMenu(res.data)
+          setMenu(res.menus)
+          setPermissions(res.permissions)
+          state.menu = formatMenu(res.menus)
+          state.permissions = res.permissions
+          // 登录后需要单独加载一下路由
+          router.addRoutes(getters.dynamicRouters)
           resolve()
         }).catch(err => {
           commit('setToken', '')
@@ -101,6 +111,7 @@ export default {
             commit('setUserName', res.username)
             commit('setUserId', res.id)
             commit('setGender', res.gender.label)
+            commit('setSuperAdmin', res.superAdmin)
             commit('setHasGetInfo', true)
             resolve(res)
           }).catch(err => {

@@ -1,171 +1,77 @@
 <template>
   <!-- 用户管理 -->
   <management
-    style="background-color: white; height: 100%;"
     ref="user"
-    :tableColumns="tableColumns"
-    :data="{table: '/api/user/list' }"
+    :table-columns="tableColumns"
+    :data="{ table: '/api/user/list' }"
     page-name="用户"
-    refresh-button
-    add-button
-    @submit="submit"
-    @delete="deleteRow"
-    @refresh="search"
+    refresh-button="/api/user/list GET"
+    add-button="/api/user/ POST"
+    @submit="submit($event, '/api/user/')"
+    @delete="deleteRow($event, '/api/user/')"
+    @refresh="search('user')"
   >
-    <Form
-      ref="searchForm"
-      :model="searchForm"
-      inline
-      :label-width="80"
-      slot="searchForm"
-    >
-      <FormItem
-        prop="realname"
-        label-for="realname"
-        label="姓名"
-      >
-        <Input
+    <Form ref="searchForm" :model="searchForm" inline :label-width="80" slot="searchForm">
+      <FormItem prop="loginName" label-for="user-search-form-loginName" label="登录名">
+        <i-input
           type="text"
-          v-model="searchForm.realname"
-          element-id="realname"
-          placeholder="请输入姓名搜索"
-        >
-        </Input>
-      </FormItem>
-      <FormItem
-        prop="MOBILE"
-        label="手机号"
-      >
-        <Input
-          type="text"
-          v-model="searchForm.MOBILE"
-          placeholder="请输入手机号搜索"
-        >
-        </Input>
-      </FormItem>
-      <FormItem>
-        <Button
-          type="primary"
-          icon="md-search"
-          @click="search"
-        >查询</Button>
-        <Button
-          @click="$refs.searchForm.resetFields()"
-          style="margin-left: 8px"
-        >重置</Button>
-      </FormItem>
-    </Form>
-    <Form
-      :model="modalForm"
-      :label-width="100"
-      :rules="modalRules"
-      ref="modalForm"
-      slot="modalForm"
-    >
-      <Row>
-        <Col span="10">
-        <FormItem
-          prop="loginName"
-          label="账号"
-        >
-          <Input
-            type="text"
-            v-model="modalForm.loginName"
-            placeholder="账号"
-          >
-          </Input>
-        </FormItem>
-        </Col>
-        <Col span="10">
-        <FormItem
-          prop="pwd"
-          label="登录密码"
-        >
-          <Input
-            type="text"
-            v-model="modalForm.pwd"
-            placeholder="若不修改密码，无需输入"
-          >
-          </Input>
-        </FormItem>
-        </Col>
-      </Row>
-      <Row>
-        <Col span="10">
-        <FormItem
-          prop="realName"
-          label="姓名"
-        >
-          <Input
-            type="text"
-            v-model="modalForm.realName"
-            placeholder="姓名"
-          >
-          </Input>
-        </FormItem>
-        </Col>
-        <Col span="10">
-        <FormItem
-          prop="userNumber"
-          label="工号"
-        >
-          <Input
-            type="text"
-            v-model="modalForm.userNumber"
-            placeholder="工号"
-          >
-          </Input>
-        </FormItem>
-        </Col>
-      </Row>
-      <Row>
-        <Col span="10">
-        <FormItem
-          prop="mobilePhone"
-          label="手机号"
-        >
-          <Input
-            type="text"
-            v-model="modalForm.mobilePhone"
-            placeholder="手机号"
-          >
-          </Input>
-        </FormItem>
-        </Col>
-        <Col span="10">
-        <FormItem
-          prop="status"
-          label="状态"
-        >
-          <i-select
-            v-model="modalForm.status"
-            placeholder="状态"
-          >
-            <i-option :value="0">注册</i-option>
-            <i-option :value="1">在用</i-option>
-            <i-option :value="2">锁定</i-option>
-          </i-select>
-        </FormItem>
-        </Col>
-      </Row>
-      <FormItem
-        label="身份证号"
-        prop="identityCard"
-      >
-        <Input
-          type="text"
-          v-model="modalForm.identityCard"
-          placeholder="身份证号"
+          v-model="searchForm.loginName"
+          element-id="user-search-form-loginName"
+          placeholder="请输入登录名名搜索"
         />
       </FormItem>
-      <FormItem
-        label="备注"
-        prop="remark"
-      >
-        <Input
+      <FormItem prop="mobilePhone" label-for="user-search-form-mobilePhone" label="手机号">
+        <i-input
+          type="text"
+          element-id="user-search-form-mobilePhone"
+          v-model="searchForm.mobilePhone"
+          placeholder="请输入手机号搜索"
+        />
+      </FormItem>
+      <FormItem>
+        <Button type="primary" icon="md-search" v-permission="'/api/user/list GET'" @click="search('user')">查询</Button>
+        <Button icon="ios-redo" @click="$refs.searchForm.resetFields()" style="margin-left: 8px">重置</Button>
+      </FormItem>
+    </Form>
+    <Form :model="modalForm" :label-width="80" :rules="modalRules" ref="modalForm" slot="modalForm">
+      <FormItem prop="loginName" label-for="user-modal-form-loginName" label="登录名">
+        <i-input
+          type="text"
+          element-id="user-modal-form-loginName"
+          v-model="modalForm.loginName"
+          placeholder="请输入登录名"
+        />
+      </FormItem>
+      <FormItem prop="realname" label-for="user-modal-form-realname" label="姓名">
+        <i-input
+          type="text"
+          element-id="user-modal-form-realname"
+          v-model="modalForm.realname"
+          placeholder="请输入姓名"
+        />
+      </FormItem>
+      <FormItem prop="mobilePhone" label-for="user-modal-form-mobilePhone" label="手机号">
+        <i-input
+          type="text"
+          element-id="user-modal-form-mobilePhone"
+          v-model="modalForm.mobilePhone"
+          placeholder="请输入手机号"
+        />
+      </FormItem>
+      <FormItem label="身份证号" label-for="user-modal-form-identityCard" prop="identityCard">
+        <i-input
+          type="text"
+          v-model="modalForm.identityCard"
+          element-id="user-modal-form-identityCard"
+          placeholder="请输入身份证号"
+        />
+      </FormItem>
+      <FormItem label="备注" label-for="user-modal-form-remark" prop="remark">
+        <i-input
           type="textarea"
           v-model="modalForm.remark"
-          placeholder="备注"
+          element-id="user-modal-form-remark"
+          placeholder="请输入备注"
         />
       </FormItem>
     </Form>
@@ -174,43 +80,49 @@
 
 <script>
 import management from "_c/management";
-import { getInfo, setActivated } from "@/api/system-management";
+import { setIsLocked, resetPassword } from "@/api/system-management";
+import managementHelp from "./mixin";
 export default {
   name: "user",
   components: {
     management
   },
+  mixins: [managementHelp],
   data() {
     return {
       searchForm: {
-        realname: "",
+        loginName: "",
         mobilePhone: ""
       },
       modalForm: {
-        addTime: "",
-        avatar: "",
-        deleted: true,
-        id: null,
-        lastLoginIp: "",
-        lastLoginTime: "",
-        locked: "",
         loginName: "",
-        mobilePhone: "",
-        onlineStatus: "",
-        password: "",
         realname: "",
-        remark: "",
-        identityCard: ''
+        userNumber: "",
+        mobilePhone: "",
+        identityCard: "",
+        remark: ""
       },
       modalRules: {
-        name: [{ required: true, message: "账号必填" }],
-        realname: [{ required: true, message: "姓名必填" }],
-        status: [{ required: true, message: "状态必须选择" }],
+        loginName: { required: true, message: "账号必填" },
+        realname: { required: true, message: "姓名必填" },
         mobilePhone: {
           trigger: "blur",
           validator(rule, value, callback) {
-            if (value.trim() && !/^1[34578]\d{9}$/.test(value.trim())) {
+            if (value && !/^1[345789]\d{9}$/.test(value.trim())) {
               callback(new Error("请输入正确的手机号码"));
+            } else {
+              callback();
+            }
+          }
+        },
+        identityCard: {
+          trigger: "blur",
+          validator(rule, value, callback) {
+            if (
+              value &&
+              !/(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/.test(value.trim())
+            ) {
+              callback(new Error("请输入正确的身份证号码"));
             } else {
               callback();
             }
@@ -220,19 +132,26 @@ export default {
       tableColumns: [
         {
           title: "登录名",
-          key: "loginName"
-        },
-        {
-          title: "手机号",
-          key: "mobilePhone"
+          key: "loginName",
+          minWidth: 100,
+          tooltip: true
         },
         {
           title: "真实姓名",
-          key: "realname"
+          key: "realname",
+          minWidth: 100,
+          tooltip: true
+        },
+        {
+          title: "手机号",
+          key: "mobilePhone",
+          minWidth: 100,
+          tooltip: true
         },
         {
           title: "状态",
           key: "locked",
+          minWidth: 100,
           tooltip: true,
           render: (h, { row }) => {
             return h("span", row.locked ? "锁定" : "解锁");
@@ -240,22 +159,28 @@ export default {
         },
         {
           title: "注册时间",
-          key: "addTime"
+          key: "addTime",
+          minWidth: 100,
+          tooltip: true
         },
         {
           title: "最后登录时间",
-          key: "lastLoginTime"
+          key: "lastLoginTime",
+          minWidth: 100,
+          tooltip: true
         },
         {
           title: "备注",
-          key: "note"
+          key: "note",
+          minWidth: 100,
+          tooltip: true
         },
         {
           title: "操作",
           key: "action",
           fixed: "right",
           align: "center",
-          width: 200,
+          minWidth: 270,
           render: (h, { row }) => {
             return h("div", [
               h(
@@ -267,9 +192,15 @@ export default {
                   },
                   on: {
                     click: () => {
-                      this.edit(row);
+                      this.edit(`/api/user/info/${row.id}`, "user");
                     }
                   },
+                  directives: [
+                    {
+                      name: "permission",
+                      value: "/api/user/ PUT"
+                    }
+                  ],
                   style: {
                     marginRight: "10px"
                   }
@@ -288,91 +219,125 @@ export default {
                       this.$refs.user.delete(row);
                     }
                   },
+                  directives: [
+                    {
+                      name: "permission",
+                      value: "/api/user/ DELETE"
+                    }
+                  ],
                   style: {
                     marginRight: "10px"
                   }
                 },
                 "删除"
               ),
-               h(
+              h(
+                "Button",
+                {
+                  props: {
+                    type: "warning",
+                    size: "small"
+                  },
+                  on: {
+                    click: () => {
+                      this.resetPassword(row.id);
+                    }
+                  },
+                  style: {
+                    marginRight: "10px"
+                  }
+                },
+                "重置密码"
+              ),
+              h(
                 "i-switch",
                 {
                   props: {
                     size: "large",
                     value: row.locked,
-                    loading: row.activated_loading
+                    loading: row.locked_loading
                   },
                   on: {
                     "on-change": value => {
-                      this.changeActivated(row, value);
+                      this.changeActivated(
+                        row,
+                        value,
+                        `/api/user/isLocked/${row.id}`
+                      );
                     }
-                  }
+                  },
+                  directives: [
+                    {
+                      name: "permission",
+                      value: "/api/user/isLocked/{id} GET"
+                    }
+                  ]
                 },
                 [
-                  h("span", { slot: "open" }, "锁定"),
-                  h("span", { slot: "close" }, "解锁")
+                  h("span", { slot: "open" }, "解锁"),
+                  h("span", { slot: "close" }, "锁定")
                 ]
               )
             ]);
           }
         }
       ]
-    }
+    };
   },
   methods: {
-    search() {
-      // 查询时，处理查询参数
-      const param = Object.assign({}, this.searchForm);
-      this.$refs.user.setTableData(param);
-    },
-    submit(pid, request) {
+    submit(event, url) {
       // 添加和保存时，参数的处理
       let param = Object.assign({}, this.modalForm);
-      param.pid = pid;
-      param.extVo={
-        identityCard:this.modalForm.identityCard
-      }
-      request(`/api/user/`, param,param.id ? "put" : "post");
+      param.extVo = {
+        identityCard: this.modalForm.identityCard
+      };
+      event.request(url, param, param.id ? "put" : "post");
     },
-    deleteRow(request) {
-      request("/api/user/");
-    },
-    edit({ id }) {
-      // 编辑时，表单的回显
-      getInfo("/api/user/info/" + id)
-        .then(data => {
-          Object.assign(this.modalForm, data, {
-            activated: data.activated ? 1 : 0
-          });
-          this.$refs.user.edit();
-        })
-        .catch(error => {
-          this.$Notice.error({
-            title: "打开编辑失败",
-            desc: error
-          });
-        });
-    },
-    state() {},
-     changeActivated(row, value) {
+    changeActivated(row, value, url) {
       row.locked = value;
-      this.$set(row, 'activated_loading', true);
-      setActivated('/api/user/', row)
+      this.$set(row, "locked_loading", true);
+      setIsLocked(url)
         .then(() => {
-          this.$set(row, 'activated_loading', false);
+          this.$set(row, "locked_loading", false);
         })
         .catch(error => {
           row.locked = !value;
-          this.$set(row, 'activated_loading', false);
+          this.$set(row, "locked_loading", false);
           this.$Notice.error({
-            title: "状态修改失败",
+            title: value ? "锁定失败" : "解锁失败",
             desc: error
           });
         });
+    },
+    resetPassword(id) {
+      this.$Modal.confirm({
+        title: "密码重置",
+        content: "将密码重置为888888",
+        loading: true,
+        onOk: () => {
+          let cancelButton = document.getElementsByClassName(
+            "ivu-modal-confirm-footer"
+          )[0].children[0];
+          cancelButton.setAttribute("disabled", "disabled");
+          resetPassword(id)
+            .then(() => {
+              cancelButton.removeAttribute("disabled");
+              this.$Modal.remove();
+              this.$Notice.success({
+                title: "密码重置成功"
+              });
+            })
+            .catch(error => {
+              cancelButton.removeAttribute("disabled");
+              this.$Modal.remove();
+              this.$Notice.error({
+                title: "密码重置成功失败",
+                desc: error
+              });
+            });
+        }
+      });
     }
   }
 };
 </script>
-
-<style>
-</style>

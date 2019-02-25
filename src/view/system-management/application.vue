@@ -1,107 +1,56 @@
 <template>
   <management
-    style="background-color: white; height: 100%; padding: 10px;"
     ref="application"
-    :tableColumns="columns1"
-    :data="{table: '/api/app/list' }"
+    :table-columns="columns"
+    :data="{ table: '/api/app/list' }"
     page-name="数据"
-    add-button
-    refresh-button
-    @submit="submit"
-    @delete="deleteRow"
-    @refresh="search"
+    add-button="/api/app/ POST"
+    refresh-button="/api/app/list GET"
+    @submit="submit($event, '/api/app/')"
+    @delete="deleteRow($event, '/api/app/')"
+    @refresh="search('application')"
   >
-    <Form
-      ref="searchForm"
-      :model="searchForm"
-      inline
-      :label-width="80"
-      slot="searchForm"
-    >
-      <FormItem
-        prop="name"
-        label="应用名称"
-      >
-        <Input
+    <Form ref="searchForm" :model="searchForm" inline :label-width="80" slot="searchForm">
+      <FormItem prop="name" label="应用名称" label-for="app-search-form-name">
+        <i-input
           type="text"
+          element-id="app-search-form-name"
           v-model="searchForm.name"
           placeholder="输入应用名称搜索"
-        >
-        </Input>
+        />
       </FormItem>
       <FormItem>
-        <Button
-          type="primary"
-          icon="md-search"
-          @click="search"
-        >搜索</Button>
-        <Button
-          @click="$refs.searchForm.resetFields()"
-          style="margin-left: 8px"
-        >重置</Button>
+        <Button type="primary" icon="md-search" v-permission="'/api/app/list GET'" @click="search('application')">搜索</Button>
+        <Button icon="ios-redo" @click="$refs.searchForm.resetFields()" style="margin-left: 8px">重置</Button>
       </FormItem>
     </Form>
-    <Form
-      :model="modalForm"
-      :label-width="80"
-      :rules="modalRules"
-      ref="modalForm"
-      slot="modalForm"
-    >
-      <FormItem
-        label="应用名称"
-        prop="name"
-      >
-        <i-input
-          v-model="modalForm.name"
-          placeholder="应用名称"
-        ></i-input>
+    <Form :model="modalForm" :label-width="80" :rules="modalRules" ref="modalForm" slot="modalForm">
+      <FormItem label="应用名称" label-for="app-modal-form-name" prop="name">
+        <i-input v-model="modalForm.name" element-id="app-modal-form-name" placeholder="请输入应用名称"/>
       </FormItem>
-      <FormItem
-        label="应用IP"
-        prop="appIp"
-      >
-        <i-input
-          v-model="modalForm.appIp"
-          placeholder="应用IP"
-        ></i-input>
+      <FormItem label="应用IP" label-for="app-modal-form-appIp" prop="appIp">
+        <i-input element-id="app-modal-form-appIp" v-model="modalForm.appIp" placeholder="请输入应用IP"/>
       </FormItem>
-      <FormItem
-        label="应用URL"
-        prop="url"
-      >
-        <i-input
-          v-model="modalForm.url"
-          placeholder="应用URL"
-        ></i-input>
+      <FormItem label="应用URL" label-for="app-modal-form-url" prop="url">
+        <i-input element-id="app-modal-form-url" v-model="modalForm.url" placeholder="请输入应用URL"/>
       </FormItem>
-      <FormItem
-        label="应用ID"
-        prop="id"
-      >
-        <i-input
-          v-model="modalForm.appId"
-          placeholder="应用ID"
-        ></i-input>
+      <FormItem label="应用ID" label-for="app-modal-form-id" prop="id">
+        <i-input v-model="modalForm.appId" element-id="app-modal-form-id" placeholder="请输入应用ID"/>
       </FormItem>
-      <FormItem
-        label="应用密钥"
-        prop="appSecret"
-      >
+      <FormItem label="应用密钥" label-for="app-modal-form-appSecret" prop="appSecret">
         <i-input
           v-model="modalForm.appSecret"
-          placeholder="应用密钥"
-        ></i-input>
+          element-id="app-modal-form-appSecret"
+          placeholder="请输入应用密钥"
+        />
       </FormItem>
-      <FormItem
-        label="备注"
-        prop="remark"
-      >
+      <FormItem label="备注" label-for="app-modal-form-remark" prop="remark">
         <i-input
           v-model="modalForm.remark"
+          element-id="app-modal-form-remark"
           type="textarea"
-          placeholder="备注"
-        ></i-input>
+          placeholder="请输入备注"
+        />
       </FormItem>
     </Form>
   </management>
@@ -109,29 +58,23 @@
 
 <script>
 import management from "_c/management";
-import { getInfo } from "@/api/system-management";
+import managementHelp from "./mixin";
 export default {
   name: "application",
   components: {
     management
   },
+  mixins: [managementHelp],
   data() {
     return {
       searchForm: {
         name: ""
       },
       modalForm: {
-        activated: "",
-        appKey: "",
         appSecret: "",
-        createdBy: null,
-        createdDate: "",
-        deleted: "",
-        id: null,
-        appId: null,
-        lastModifiedBy: null,
-        lastModifiedDate: "",
+        appId: '',
         name: "",
+        appIp: '',
         remark: "",
         url: ""
       },
@@ -140,43 +83,48 @@ export default {
         appId: [{ required: true, message: "应用ID必须填写" }],
         url: [{ required: true, message: "应用ID必须填写" }]
       },
-      columns1: [
+      columns: [
         {
           title: "应用名称",
           key: "name",
-          minWidth: 250,
+          minWidth: 150,
           tooltip: true
         },
         {
           title: "应用IP",
           key: "appIp",
-          minWidth: 280,
+          minWidth: 180,
           tooltip: true
         },
         {
           title: "应用URL",
           key: "url",
-          minWidth: 255,
+          minWidth: 155,
           tooltip: true
         },
         {
           title: "应用ID",
           key: "appId",
-          minWidth: 250,
+          minWidth: 150,
           tooltip: true
         },
         {
           title: "应用密钥",
           key: "appSecret",
-          minWidth: 250,
+          minWidth: 150,
+          tooltip: true
+        },{
+          title: "备注",
+          key: "remark",
+          minWidth: 150,
           tooltip: true
         },
         {
           title: "操作",
           key: "action",
           fixed: "right",
+          minWidth: 150,
           align: "center",
-          minWidth: 200,
           render: (h, { row }) => {
             return h("div", [
               h(
@@ -188,9 +136,15 @@ export default {
                   },
                   on: {
                     click: () => {
-                      this.edit(row);
+                      this.edit(`/api/app/info/${row.id}`, "application");
                     }
                   },
+                  directives: [
+                    {
+                      name: "permission",
+                      value: "/api/app/ PUT"
+                    }
+                  ],
                   style: {
                     marginRight: "10px"
                   }
@@ -208,7 +162,13 @@ export default {
                     click: () => {
                       this.$refs.application.delete(row);
                     }
-                  }
+                  },
+                  directives: [
+                    {
+                      name: "permission",
+                      value: "/api/app/ DELETE"
+                    }
+                  ],
                 },
                 "删除"
               )
@@ -217,43 +177,6 @@ export default {
         }
       ]
     };
-  },
-  methods: {
-    submit(pid, request) {
-      // 添加和保存时，参数的处理
-      let param = Object.assign({}, this.modalForm);
-      param.activated = !!param.activated;
-      param.appId = pid;
-      console.log(param.id);
-      request("/api/app/", param, param.id ? "put" : "post");
-    },
-    search() {
-      // 查询时，处理查询参数
-      const param = Object.assign({}, this.searchForm);
-      for (let i in param) {
-        param[i] === "" && delete param[i];
-      }
-      this.$refs.application.setTableData(param);
-    },
-    edit({ id }) {
-      getInfo("/api/app/info/" + id)
-        .then(data => {
-          Object.assign(this.modalForm, data, {
-            activated: data.activated ? 1 : 0
-          });
-          this.$refs.application.edit();
-        })
-        .catch(error => {
-          this.$Notice.error({
-            title: "打开编辑失败",
-            desc: error
-          });
-        });
-    },
-    state() {},
-    deleteRow(request) {
-      request("/api/app/");
-    }
   }
 };
 </script>

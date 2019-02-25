@@ -1,109 +1,61 @@
 <template>
   <!-- 字典管理 -->
   <management
-    style="background-color: white; height: 100%; padding: 10px;"
     ref="dictionary"
-    :tableColumns="columns1"
-    :data="{table: '/api/dictionary/list' }"
-    page-name="数据"
-    add-button
-    refresh-button
-    @submit="submit"
-    @delete="deleteRow"
-    @refresh="search"
+    :table-columns="columns"
+    :data="{ table: '/api/dictionary/list' }"
+    page-name="字典管理"
+    add-button="/api/dictionary/ POST"
+    refresh-button="/api/dictionary/list GET"
+    @submit="submit($event, '/api/dictionary/')"
+    @delete="deleteRow($event, '/api/dictionary/')"
+    @refresh="search('dictionary')"
   >
-    <Form
-      ref="searchForm"
-      :model="searchForm"
-      inline
-      :label-width="80"
-      slot="searchForm"
-    >
-      <FormItem
-        prop="label"
-        label="字典名称"
-      >
-        <Input
+    <Form ref="searchForm" :model="searchForm" inline :label-width="80" slot="searchForm">
+      <FormItem prop="label" label-for="dic-search-form-label" label="字典名称">
+        <i-input
           type="text"
+          element-id="dic-search-form-label"
           v-model="searchForm.label"
           placeholder="输入字典名称搜索"
-        >
-        </Input>
+        />
       </FormItem>
-      <FormItem
-        prop="description"
-        label="字典描述"
-      >
-        <Input
+      <FormItem prop="description" label-for="dic-search-form-desc" label="字典描述">
+        <i-input
           type="text"
           v-model="searchForm.description"
+          element-id="dic-search-form-desc"
           placeholder="输入字典描述搜索"
-        >
-        </Input>
+        />
       </FormItem>
       <FormItem>
-        <Button
-          type="primary"
-          icon="md-search"
-          @click="search"
-        >搜索</Button>
-        <Button
-          @click="$refs.searchForm.resetFields()"
-          style="margin-left: 8px"
-        >重置</Button>
+        <Button type="primary" icon="md-search" v-permission="'/api/dictionary/list GET'" @click="search('dictionary')">搜索</Button>
+        <Button icon="ios-redo" @click="$refs.searchForm.resetFields()" style="margin-left: 8px">重置</Button>
       </FormItem>
     </Form>
-    <Form
-      :model="modalForm"
-      :label-width="80"
-      :rules="modalRules"
-      ref="modalForm"
-      slot="modalForm"
-    >
-      <FormItem
-        label="字典名称"
-        prop="label"
-      >
-        <i-input
-          v-model="modalForm.label"
-          placeholder="字典名称"
-        ></i-input>
+    <Form :model="modalForm" :label-width="80" :rules="modalRules" ref="modalForm" slot="modalForm">
+      <FormItem label="字典名称" label-for="dic-modal-form-label" prop="label">
+        <i-input element-id="dic-modal-form-label" v-model="modalForm.label" placeholder="请输入字典名称"></i-input>
       </FormItem>
-      <FormItem
-        label="字典描述"
-        prop="description"
-      >
+      <FormItem label="字典描述" label-for="dic-modal-form-desc" prop="description">
         <i-input
+          element-id="dic-modal-form-desc"
           v-model="modalForm.description"
-          placeholder="字典描述"
+          placeholder="请输入字典描述"
         ></i-input>
       </FormItem>
-      <FormItem
-        label="字典类型"
-        prop="type"
-      >
-        <i-input
-          v-model="modalForm.type"
-          placeholder="字典类型"
-        ></i-input>
+      <FormItem label="字典类型" label-for="dic-modal-form-type" prop="type">
+        <i-input v-model="modalForm.type" element-id="dic-modal-form-type" placeholder="请输入字典类型"></i-input>
       </FormItem>
-      <FormItem
-        label="字典值"
-        prop="value"
-      >
-        <i-input
-          v-model="modalForm.value"
-          placeholder="类型描述"
-        ></i-input>
+      <FormItem label="字典值" label-for="dic-modal-form-value" prop="value">
+        <i-input element-id="dic-modal-form-value" v-model="modalForm.value" placeholder="请输入类型描述"></i-input>
       </FormItem>
-      <FormItem
-        label="备注"
-        prop="remark"
-      >
+      <FormItem label="备注" label-for="dic-modal-form-remark" prop="remark">
         <i-input
+          element-id="dic-modal-form-remark"
           v-model="modalForm.remark"
           type="textarea"
-          placeholder="备注"
+          placeholder="请输入备注"
         ></i-input>
       </FormItem>
     </Form>
@@ -112,12 +64,13 @@
 
 <script>
 import management from "_c/management";
-import { getInfo, setActivated } from "@/api/system-management";
+import managementHelp from "./mixin";
 export default {
   name: "dictionary",
   components: {
     management
   },
+  mixins: [managementHelp],
   data() {
     return {
       searchForm: {
@@ -125,20 +78,11 @@ export default {
         description: ""
       },
       modalForm: {
-        activated: "",
-        createdBy: 0,
-        createdDate: "",
-        deleted: "",
         description: "",
-        dictGroup: "",
-        id: 0,
         label: "",
-        lastModifiedBy: "",
-        lastModifiedDate: "",
         remark: "",
-        sort: 0,
-        type: null,
-        value: null
+        type: "",
+        value: ""
       },
       modalRules: {
         type: [{ required: true, message: "字典类型必须填写" }],
@@ -146,29 +90,29 @@ export default {
         label: [{ required: true, message: "字典名称必须填写" }],
         value: [{ required: true, message: "字典值必须填写" }]
       },
-      columns1: [
+      columns: [
         {
           title: "字典名称",
           key: "label",
-          minWidth: 100,
+          minWidth: 80,
           tooltip: true
         },
         {
           title: "字典描述",
           key: "description",
-          minWidth: 145,
+          minWidth: 80,
           tooltip: true
         },
         {
           title: "字典类型",
           key: "type",
-          minWidth: 100,
+          minWidth: 80,
           tooltip: true
         },
         {
           title: "字典值",
           key: "value",
-          minWidth: 150,
+          minWidth: 80,
           tooltip: true
         },
         {
@@ -181,34 +125,22 @@ export default {
           }
         },
         {
-          title: "创建人",
-          key: "createBy",
-          minWidth: 100,
-          tooltip: true
-        },
-        {
           title: "创建时间",
-          key: "createDate",
-          minWidth: 180,
-          tooltip: true
-        },
-        {
-          title: "最后修改人",
-          key: "lastModifiedBy",
-          minWidth: 100,
+          key: "createdDate",
+          minWidth: 80,
           tooltip: true
         },
         {
           title: "最后修改时间",
           key: "lastModifiedDate",
-          minWidth: 180,
+          minWidth: 80,
           tooltip: true
         },
         {
           title: "备注",
           key: "remark",
-          minWidth: 200,
-          tooltip: true
+          tooltip: true,
+          minWidth: 80
         },
         {
           title: "操作",
@@ -227,9 +159,15 @@ export default {
                   },
                   on: {
                     click: () => {
-                      this.edit(row);
+                      this.edit(`/api/dictionary/info/${row.id}`, "dictionary");
                     }
                   },
+                  directives: [
+                    {
+                      name: "permission",
+                      value: "/api/dictionary/ PUT"
+                    }
+                  ],
                   style: {
                     marginRight: "10px"
                   }
@@ -248,6 +186,12 @@ export default {
                       this.$refs.dictionary.delete(row);
                     }
                   },
+                   directives: [
+                    {
+                      name: "permission",
+                      value: "/api/dictionary/ DELETE"
+                    }
+                  ],
                   style: {
                     marginRight: "10px"
                   }
@@ -259,14 +203,20 @@ export default {
                 {
                   props: {
                     size: "large",
-                    value: row.activated,
+                    value: !row.activated,
                     loading: row.activated_loading
                   },
                   on: {
                     "on-change": value => {
-                      this.changeActivated(row, value);
+                      this.changeActivated(row, value, '/api/dictionary/isActivated/');
                     }
-                  }
+                  },
+                  directives: [
+                    {
+                      name: "permission",
+                      value: '/api/dictionary/isActivated GET'
+                    }
+                  ]
                 },
                 [
                   h("span", { slot: "open" }, "启用"),
@@ -278,56 +228,6 @@ export default {
         }
       ]
     };
-  },
-  methods: {
-    deleteRow(request) {
-      request("/api/dictionary/");
-    },
-    edit({ id }) {
-      getInfo("/api/dictionary/info/" + id)
-        .then(data => {
-          Object.assign(this.modalForm, data, {
-            activated: data.activated ? 1 : 0
-          });
-          this.$refs.dictionary.edit();
-        })
-        .catch(error => {
-          this.$Notice.error({
-            title: "打开编辑失败",
-            desc: error
-          });
-        });
-    },
-    submit(pid, request) {
-      // 添加和保存时，参数的处理
-      let param = Object.assign({}, this.modalForm);
-      param.activated = !!param.activated;
-      request("/api/dictionary/", param, param.id ? "put" : "post");
-    },
-    search() {
-      // 查询时，处理查询参数
-      const param = Object.assign({}, this.searchForm);
-      for (let i in param) {
-        param[i] === "" && delete param[i];
-      }
-      this.$refs.dictionary.setTableData(param);
-    },
-    changeActivated(row, value) {
-      row.activated = value;
-      this.$set(row, "activated_loading", true);
-      setActivated("/api/dictionary/isActivated/", row)
-        .then(() => {
-          this.$set(row, "activated_loading", false);
-        })
-        .catch(error => {
-          row.activated = !value;
-          this.$set(row, "activated_loading", false);
-          this.$Notice.error({
-            title: "状态修改失败",
-            desc: error
-          });
-        });
-    }
   }
 };
 </script>

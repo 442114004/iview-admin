@@ -2,20 +2,22 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import '@babel/polyfill'
 import Vue from 'vue'
+import iView from 'iview'
+import formCreat from 'form-create'
 import App from './App'
 import router from './router'
 import store from './store'
-import iView from 'iview'
 import i18n from '@/locale'
 import config from '@/config'
 import importDirective from '@/directive'
 import installPlugin from '@/plugin'
 import './index.less'
-import '@/assets/icons/iconfont.css'
 
 Vue.use(iView, {
   i18n: (key, value) => i18n.t(key, value)
 })
+
+Vue.use(formCreat)
 
 /**
  * @description 注册admin内置插件

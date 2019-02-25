@@ -8,35 +8,32 @@
         <div class="searchForm">
           <slot name="searchForm"/>
         </div>
-        <div class="add" v-if="addButton || refreshButton || loadButton">
-          <Button type="info" icon="ios-cloud-download" v-show="loadButton" @click="loadMore">加载权限</Button>
-          <Button type="info" icon="md-refresh" v-show="refreshButton" @click="$emit('refresh')">刷新</Button>
+        <div class="optionButton" v-if="addButton || refreshButton || otherButton.length > 0">
           <Button
-            type="success"
-            icon="md-add"
-            v-show="addButton"
-            @click="add"
-            style="margin-left: 8px;"
-          >添加</Button>
+            v-for="(b, index) in otherButton"
+            :key="index"
+            :type="b.type || 'info'"
+            :icon="b.icon"
+            v-permission="b.permission"
+            @click="b.click"
+          >{{b.name}}</Button>
+          <Button type="info" icon="md-refresh" v-if="refreshButton" v-permission="refreshButton" @click="$emit('refresh')">刷新</Button>
+          <Button type="success" icon="md-add" v-if="addButton" v-permission="addButton" @click="add">添加</Button>
         </div>
-        <i-table
-          size="small"
-          :columns="tableColumns"
-          :loading="tableLoading"
-          :data="tableData"
-          stripe
+        <i-table :columns="tableColumns" :loading="tableLoading" :data="tableData" stripe/>
+        <Page
+          v-if="!noPaging"
+          class="page"
+          show-sizer
+          show-total
+          show-elevator
+          :total="total"
+          :page-size="pageSize"
+          :current.sync="currentPage"
+          :page-size-opts="[10, 20, 30, 40, 50, 100, 500]"
+          @on-change="changePage"
+          @on-page-size-change="changePageSize"
         />
-        <div class="paging">
-          <Select class="select" v-model="pageSize" @on-change="changePageSize">
-            <Option :value="10">10条/页</Option>
-            <Option :value="20">20条/页</Option>
-            <Option :value="50">50条/页</Option>
-            <Option :value="100">100条/页</Option>
-            <Option :value="500">500条/页</Option>
-          </Select>
-          <div class="total">共{{pages}}条</div>
-          <Page class="page" :total="total" :current.sync="currentPage" @on-change="changePage"/>
-        </div>
       </Col>
     </Row>
     <Modal
@@ -76,9 +73,12 @@ export default {
       type: Array,
       required: true
     },
-    addButton: Boolean,
-    loadButton: Boolean,
-    refreshButton: Boolean,
+    addButton: [Boolean, String],
+    refreshButton: [Boolean, String],
+    otherButton: {
+      type: Array,
+      default: () => []
+    },
     pageName: {
       type: String,
       default: ""
@@ -90,6 +90,12 @@ export default {
     autoInit: {
       type: Boolean,
       default: true
+    },
+    searchForm: Array,
+    modalForm: Array,
+    noPaging: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
@@ -123,10 +129,12 @@ export default {
   activated() {
     // this.setTreeData();
   },
+  watch: {
+    openModal(value) {
+      !value && this.$emit("closeModal");
+    }
+  },
   methods: {
-    loadMore() {
-      this.setTableData();
-    },
     getSelectTreeId() {
       if (!this.data.tree || this.treeData.length === 0) return;
       const select = this.$refs.tree.getSelectedNodes()[0];
@@ -137,13 +145,12 @@ export default {
         return select.id;
       }
     },
-    changePage(e) {
-      console.log(e);
-      this.currentPage = e;
+    changePage() {
       this.$emit("refresh");
     },
-    changePageSize() {
+    changePageSize(pageSize) {
       this.currentPage = 1;
+      this.pageSize = pageSize;
       this.$emit("refresh");
     },
     changeSelect() {
@@ -152,12 +159,12 @@ export default {
     },
     setTableData(param = {}) {
       if (!param.pid && this.data.tree) {
-        param.pid = this.getSelectTreeId();
+        param.parentId = param.pid = this.getSelectTreeId();
       }
       this.tableLoading = true;
       getTableData(this.data.table, this.currentPage, this.pageSize, param)
         .then(data => {
-          this.tableData = data.recoreds;
+          this.tableData = data.recoreds || data;
           this.pageSize = data.pageSize;
           this.pages = data.pages;
           this.total = data.total - 0;
@@ -169,8 +176,8 @@ export default {
         });
     },
     async setTreeData() {
-      const { recoreds } = await getTreeData(this.data.tree);
-      let treeList = buildTree(recoreds);
+      const data = await getTreeData(this.data.tree);
+      let treeList = buildTree(data.recoreds || data);
       if (!this.autoInit) {
         treeList[0].selected = false;
       }
@@ -179,8 +186,8 @@ export default {
     },
     async refreshPage() {
       if (this.data.tree) {
-        const { recoreds } = await getTreeData(this.data.tree);
-        let treeList = buildTree(recoreds);
+        const data = await getTreeData(this.data.tree);
+        let treeList = buildTree(data.recoreds || data);
         setSelectTreeById(treeList, this.getSelectTreeId());
         this.treeData = treeList;
       }
@@ -215,27 +222,31 @@ export default {
                   desc: error
                 });
               });
-          });
+          }, id);
         }
       });
     },
     detail() {
-      if (!this.modalForm) return;
+      if (!this.modal_form) return;
       this.titleModal = `${this.pageName}详情`;
       this.openModal = true;
     },
     edit() {
-      if (!this.modalForm) return;
+      if (!this.modal_form) return;
       this.titleModal = `编辑${this.pageName}`;
       this.openModal = true;
     },
     add() {
-      if (!this.modalForm) return;
+      if (!this.modal_form) return;
       this.titleModal = `添加${this.pageName}`;
       this.openModal = true;
     },
     okModal() {
-      this.modalForm.validate(valid => {
+      if (this.titleModal === `${this.pageName}详情`) {
+        this.openModal = false;
+        return;
+      }
+      this.modal_form.validate(valid => {
         this.modalLoading = false;
         this.$nextTick(() => {
           this.modalLoading = true;
@@ -245,39 +256,42 @@ export default {
         this.modalLoading = true;
         let cancelButton = document.getElementsByClassName(
           "management-component-form-modal"
-        )[0].children[0].children[0].children[3].children[0];
+        )[0].children[0].children[0].lastChild.children[0];
         cancelButton.setAttribute("disabled", "disabled");
-        this.$emit("submit", this.getSelectTreeId(), (url, data, method) => {
-          addTableData(url, data, method)
-            .then(() => {
-              this.openModal = false;
-              this.reset();
-              cancelButton.removeAttribute("disabled");
-              this.closable = true;
-              this.titleModal === `添加${this.titleModal}` &&
-                (this.currentPage = 1);
-              // this.$emit('refresh');
-              this.refreshPage();
-              this.$Notice.success({
-                title: `${this.titleModal}成功`
+        this.$emit("submit", {
+          pid: this.getSelectTreeId() || -1,
+          request: (url, data, method) => {
+            addTableData(url, data, method)
+              .then(() => {
+                this.openModal = false;
+                this.reset();
+                cancelButton.removeAttribute("disabled");
+                this.closable = true;
+                this.titleModal === `添加${this.titleModal}` &&
+                  (this.currentPage = 1);
+                // this.$emit('refresh');
+                this.refreshPage();
+                this.$Notice.success({
+                  title: `${this.titleModal}成功`
+                });
+              })
+              .catch(error => {
+                this.modalLoading = false;
+                cancelButton.removeAttribute("disabled");
+                this.closable = true;
+                this.$Notice.error({
+                  title: `${this.titleModal}失败`,
+                  desc: error
+                });
               });
-            })
-            .catch(error => {
-              this.modalLoading = false;
-              cancelButton.removeAttribute("disabled");
-              this.closable = true;
-              this.$Notice.error({
-                title: `${this.titleModal}失败`,
-                desc: error
-              });
-            });
+          }
         });
       });
     },
     reset() {
-      this.modalForm.resetFields();
-      for (let i in this.modalForm.model) {
-        this.modalForm.model[i] = "";
+      this.modal_form.resetFields();
+      for (let i in this.modal_form.model) {
+        this.modal_form.model[i] = "";
       }
     },
     getModalForm() {
@@ -289,9 +303,9 @@ export default {
         modalForm[0].context.$refs.modalForm
       ) {
         modalForm = modalForm[0].context.$refs.modalForm;
-        this.modalForm = modalForm;
+        this.modal_form = modalForm;
       } else {
-        delete this.modalForm;
+        delete this.modal_form;
       }
     }
     // getSearchForm() {
@@ -316,6 +330,7 @@ export default {
   background-color: white;
   height: 100%;
   min-height: 628px;
+  min-width: 1057px;
   > div {
     height: 100%;
   }
@@ -328,27 +343,17 @@ export default {
   .table {
     padding: 10px;
     height: 100%;
+    overflow: auto;
   }
-  .add {
+  .optionButton {
     text-align: right;
     margin-bottom: 10px;
-  }
-  .paging {
-    margin-top: 10px;
-    overflow: hidden;
-  }
-  .select {
-    float: right;
-    width: 82px;
-    margin-left: 10px;
-  }
-  .total {
-    float: right;
-    height: 32px;
-    line-height: 32px;
-    margin-left: 10px;
+    button:not(:last-child) {
+      margin-right: 10px;
+    }
   }
   .page {
+    margin-top: 10px;
     float: right;
   }
   .searchForm {

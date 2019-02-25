@@ -1,14 +1,14 @@
 <template>
   <management
     ref="organization"
-    :tableColumns="tableColumns"
+    :table-columns="tableColumns"
     :data="{ tree: '/api/org/list', table: '/api/org/list' }"
     page-name="组织结构"
-    add-button
-    refresh-button
-    @submit="submit"
-    @delete="deleteRow"
-    @refresh="search"
+    add-button="/api/org/ POST"
+    refresh-button="/api/org/list GET"
+    @submit="submit($event, '/api/org/')"
+    @delete="deleteRow($event, '/api/org/')"
+    @refresh="search('organization')"
   >
     <Form :model="searchForm" inline :label-width="80" ref="searchForm" slot="searchForm">
       <FormItem prop="name" label-for="org-search-form-name" label="机构名">
@@ -33,8 +33,8 @@
         </i-select>
       </FormItem>
       <FormItem>
-        <Button type="primary" @click="search">查询</Button>
-        <Button @click="$refs.searchForm.resetFields()" style="margin-left: 8px">重置</Button>
+        <Button type="primary" icon="md-search" v-permission="'/api/org/list GET'" @click="search('organization')">搜索</Button>
+        <Button icon="ios-redo" @click="$refs.searchForm.resetFields()" style="margin-left: 8px">重置</Button>
       </FormItem>
     </Form>
     <Form
@@ -45,94 +45,65 @@
       ref="modalForm"
       slot="modalForm"
     >
-      <Row>
-        <Col span="8">
-          <FormItem prop="name" label-for="org-modal-form-name" label="机构名">
-            <i-input
-              type="text"
-              v-model="modalForm.name"
-              element-id="org-modal-form-name"
-              placeholder="请输入机构名"
-            />
-          </FormItem>
-        </Col>
-        <Col span="8">
-          <FormItem prop="address" label-for="org-modal-form-address" label="机构地址">
-            <i-input
-              type="text"
-              v-model="modalForm.address"
-              element-id="org-modal-form-address"
-              placeholder="请输入机构地址"
-            />
-          </FormItem>
-        </Col>
-        <Col span="8">
-          <FormItem prop="areacode" label-for="org-modal-form-areacode" label="地区编码">
-            <i-input
-              type="text"
-              v-model="modalForm.areacode"
-              element-id="org-modal-form-areacode"
-              placeholder="请输入地区编码"
-            />
-          </FormItem>
-        </Col>
-      </Row>
-      <Row>
-        <Col span="8">
-          <FormItem prop="type" label-for="org-modal-form-type" label="机构类型">
-            <i-select
-              v-model="modalForm.type"
-              element-id="org-modal-form-type"
-              placeholder="请选择机构类型"
-            >
-              <i-option value="0">单位</i-option>
-              <i-option value="1">部门</i-option>
-            </i-select>
-          </FormItem>
-        </Col>
-        <Col span="8">
-          <FormItem prop="code" label-for="org-modal-form-code" label="机构编码">
-            <i-input
-              type="text"
-              v-model="modalForm.code"
-              element-id="org-modal-form-code"
-              placeholder="请输入机构编码"
-            />
-          </FormItem>
-        </Col>
-        <Col span="8">
-          <FormItem prop="activated" label="状态">
-            <RadioGroup v-model="modalForm.activated">
-              <Radio :label="1">启用</Radio>
-              <Radio :label="0">停用</Radio>
-            </RadioGroup>
-          </FormItem>
-        </Col>
-      </Row>
-      <Row>
-        <Col span="24">
-          <FormItem prop="remark" label-for="org-modal-form-remark" label="备注">
-            <i-input
-              v-model="modalForm.remark"
-              type="textarea"
-              element-id="org-modal-form-remark"
-              placeholder="请选择备注"
-            />
-          </FormItem>
-        </Col>
-      </Row>
+      <FormItem prop="name" label-for="org-modal-form-name" label="机构名">
+        <i-input
+          type="text"
+          v-model="modalForm.name"
+          element-id="org-modal-form-name"
+          placeholder="请输入机构名"
+        />
+      </FormItem>
+      <FormItem prop="address" label-for="org-modal-form-address" label="机构地址">
+        <i-input
+          type="text"
+          v-model="modalForm.address"
+          element-id="org-modal-form-address"
+          placeholder="请输入机构地址"
+        />
+      </FormItem>
+      <FormItem prop="areacode" label-for="org-modal-form-areacode" label="地区编码">
+        <i-input
+          type="text"
+          v-model="modalForm.areacode"
+          element-id="org-modal-form-areacode"
+          placeholder="请输入地区编码"
+        />
+      </FormItem>
+      <FormItem prop="type" label-for="org-modal-form-type" label="机构类型">
+        <i-select v-model="modalForm.type" element-id="org-modal-form-type" placeholder="请选择机构类型">
+          <i-option value="0">单位</i-option>
+          <i-option value="1">部门</i-option>
+        </i-select>
+      </FormItem>
+      <FormItem prop="code" label-for="org-modal-form-code" label="机构编码">
+        <i-input
+          type="text"
+          v-model="modalForm.code"
+          element-id="org-modal-form-code"
+          placeholder="请输入机构编码"
+        />
+      </FormItem>
+      <FormItem prop="remark" label-for="org-modal-form-remark" label="备注">
+        <i-input
+          v-model="modalForm.remark"
+          type="textarea"
+          element-id="org-modal-form-remark"
+          placeholder="请输入备注"
+        />
+      </FormItem>
     </Form>
   </management>
 </template>
 
 <script>
 import management from "_c/management";
-import { getInfo, setActivated } from "@/api/system-management";
+import managementHelp from "./mixin";
 export default {
   name: "organization",
   components: {
     management
   },
+  mixins: [managementHelp],
   data() {
     return {
       modalForm: {
@@ -141,7 +112,6 @@ export default {
         areacode: "",
         type: "",
         code: "",
-        activated: "",
         remark: ""
       },
       modalRules: {
@@ -149,8 +119,7 @@ export default {
         address: [{ required: true, message: "机构地址必填" }],
         areacode: [{ required: true, message: "地区编码必填" }],
         type: [{ required: true, message: "机构类型必填" }],
-        code: [{ required: true, message: "机构编码必填" }],
-        activated: [{ required: true, message: "状态必填" }]
+        code: [{ required: true, message: "机构编码必填" }]
       },
       searchForm: {
         name: "",
@@ -206,20 +175,8 @@ export default {
           }
         },
         {
-          title: "创建人",
-          key: "createdBy",
-          minWidth: 80,
-          tooltip: true
-        },
-        {
           title: "创建时间",
           key: "createdDate",
-          minWidth: 100,
-          tooltip: true
-        },
-        {
-          title: "最后修改人",
-          key: "lastModifiedBy",
           minWidth: 100,
           tooltip: true
         },
@@ -240,6 +197,7 @@ export default {
           key: "action",
           fixed: "right",
           width: 200,
+          align: "center",
           render: (h, { row }) => {
             return h("div", [
               h(
@@ -251,13 +209,15 @@ export default {
                   },
                   on: {
                     click: () => {
-                      this.edit(row);
+                      this.edit(`/api/org/info/${row.id}`, "organization");
                     }
                   },
-                  directives: [{
-                    name: 'permission',
-                    value: 'org_edit'
-                  }],
+                  directives: [
+                    {
+                      name: "permission",
+                      value: "/api/org/ PUT"
+                    }
+                  ],
                   style: {
                     marginRight: "10px"
                   }
@@ -276,6 +236,12 @@ export default {
                       this.$refs.organization.delete(row);
                     }
                   },
+                  directives: [
+                    {
+                      name: "permission",
+                      value: "/api/org/ DELETE"
+                    }
+                  ],
                   style: {
                     marginRight: "10px"
                   }
@@ -287,14 +253,20 @@ export default {
                 {
                   props: {
                     size: "large",
-                    value: row.activated,
+                    value: !row.activated,
                     loading: row.activated_loading
                   },
                   on: {
                     "on-change": value => {
-                      this.changeActivated(row, value);
+                      this.changeActivated(row, value, "/api/org/");
                     }
-                  }
+                  },
+                  directives: [
+                    {
+                      name: "permission",
+                      value: "/api/org/ PUT"
+                    }
+                  ]
                 },
                 [
                   h("span", { slot: "open" }, "启用"),
@@ -306,58 +278,6 @@ export default {
         }
       ]
     };
-  },
-  methods: {
-    submit(pid, request) {
-      // 添加和保存时，参数的处理
-      let param = Object.assign({}, this.modalForm);
-      param.activated = !!param.activated;
-      param.pid = pid;
-      request("/api/org/", param, param.id ? "put" : "post");
-    },
-    deleteRow(request) {
-      request("/api/org/");
-    },
-    edit({ id }) {
-      // 编辑时，表单的回显
-      getInfo("/api/org/info/" + id)
-        .then(data => {
-          Object.assign(this.modalForm, data, {
-            activated: data.activated ? 1 : 0
-          });
-          this.$refs.organization.edit();
-        })
-        .catch(error => {
-          this.$Notice.error({
-            title: "打开编辑失败",
-            desc: error
-          });
-        });
-    },
-    search() {
-      // 查询时，处理查询参数
-      const param = Object.assign({}, this.searchForm);
-      for (let i in param) {
-        param[i] === "" && delete param[i];
-      }
-      this.$refs.organization.setTableData(param);
-    },
-    changeActivated(row, value) {
-      row.activated = value;
-      this.$set(row, 'activated_loading', true);
-      setActivated('/api/org/', row)
-        .then(() => {
-          this.$set(row, 'activated_loading', false);
-        })
-        .catch(error => {
-          row.activated = !value;
-          this.$set(row, 'activated_loading', false);
-          this.$Notice.error({
-            title: "状态修改失败",
-            desc: error
-          });
-        });
-    }
   }
 };
 </script>

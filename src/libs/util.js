@@ -233,38 +233,59 @@ export const objEqual = (obj1, obj2) => {
  * @return {String} parents 多层级树状结构
  */
 export const buildTree = (list, id = 'id', pid = 'pid', tree = true) => {
-  let parents = list.filter(value => value[pid] === null || value[pid] === undefined || value[pid] == 0 || value[pid] === '' || value[pid] === '#' || value[pid] === '*')
-  let children = list.filter(value => value[pid] !== null && value[pid] !== undefined && value[pid] != 0 && value[pid] !== '' && value[pid] !== '#' && value[pid] !== '*')
-  let translator = (parents, children) => {
-    parents.forEach(parent => {
-      if (tree) {
-        parent.expand = true
-        parent.title = parent.name
-      }
-      children.forEach((current, index) => {
-        if (current[pid] === parent[id]) {
-          let temp = [...children]
-          temp.splice(index, 1)
-          translator([current], temp)
-          if (tree) {
-            current.title = current.name
-          }
-          typeof parent.children !== 'undefined' ? parent.children.push(current) : parent.children = [current]
-        }
+  if (list[0] && list[0].subMenus) {
+    const translator = traList => {
+      traList.forEach(item => {
+        item.expand = true
+        item.title = item.name || 'null'
+        item.children = item.subMenus
+        item.selected = false
+        delete item.subMenus
+        translator(item.children)
       })
-    })
-  }
-  translator(parents, children)
-  if (tree) {
+    }
+    translator(list)
     return [{
-      id: '0',
+      // id: '0',
       title: '全部',
       expand: true,
       selected: true,
-      children: parents
+      children: list
     }]
   } else {
-    return parents
+    let parents = list.filter(value => value[pid] === null || value[pid] === undefined || value[pid] == 0 || value[pid] === '' || value[pid] === '#' || value[pid] === '*')
+    let children = list.filter(value => value[pid] !== null && value[pid] !== undefined && value[pid] != 0 && value[pid] !== '' && value[pid] !== '#' && value[pid] !== '*')
+    const translator = (parents, children) => {
+      parents.forEach(parent => {
+        if (tree) {
+          parent.expand = true
+          parent.title = parent.name || 'null'
+        }
+        children.forEach((current, index) => {
+          if (current[pid] === parent[id]) {
+            let temp = [...children]
+            temp.splice(index, 1)
+            translator([current], temp)
+            if (tree) {
+              current.title = current.name || 'null'
+            }
+            typeof parent.children !== 'undefined' ? parent.children.push(current) : parent.children = [current]
+          }
+        })
+      })
+    }
+    translator(parents, children)
+    if (tree) {
+      return [{
+        id: '0',
+        title: '全部',
+        expand: true,
+        selected: true,
+        children: parents
+      }]
+    } else {
+      return parents
+    }
   }
 }
 
@@ -293,6 +314,30 @@ export const setSelectTreeById = (list, id) => {
   }
 }
 
+export const setSelectTreeByOwn = (list, own) => {
+  const eachChildren = children => {
+    for (let i = 0; i < children.length; i++) {
+      if (children[i].own == own) {
+        children[i].selected = true
+        children[i].checked = true
+      }
+      if (children[i].children && Array.isArray(children[i].children)) {
+        eachChildren(children[i].children)
+      }
+    }
+  }
+  for (let i = 0; i < list.length; i++) {
+    if (list[i].own == own) {
+      list[i].selected = true
+    } else {
+      list[i].selected = false
+    }
+    if (list[i].children && Array.isArray(list[i].children)) {
+      eachChildren(list[i].children)
+    }
+  }
+}
+
 export const localSave = (key, value) => {
   localStorage.setItem(key, value)
 }
@@ -306,6 +351,8 @@ export const localRead = (key) => {
 export const TOKEN_KEY = 'token'
 
 export const MENU_KEY = 'menu'
+
+export const PERISSIONS_KEY = 'permissions'
 
 export const formatMenu = menu => {
   let addList = []
@@ -375,6 +422,18 @@ export const getMenu = () => {
   }
 }
 
+export const setPermissions = menu => {
+  localSave(PERISSIONS_KEY, JSON.stringify(menu))
+}
+
+export const getPermissions = () => {
+  try {
+    return JSON.parse(localRead(PERISSIONS_KEY))
+  } catch (e) {
+    return []
+  }
+}
+
 export const hasChild = (item) => {
   return item.children && item.children.length !== 0
 }
@@ -429,7 +488,7 @@ export const getBreadCrumbList = (route, homeRoute) => {
     return obj
   })
   res = res.filter(item => {
-    return !item.meta.hideInMenu
+    return item.meta.needInBread ? true : !item.meta.hideInMenu
   })
   return [{ ...homeItem,
     to: homeRoute.path
@@ -485,7 +544,7 @@ export const getTagNavListFromLocalstorage = () => {
  * @param {Array} routers 路由列表数组
  * @description 用于找到路由列表中name为home的对象
  */
-export const getHomeRoute = (routers, homeName = 'home') => {
+export const getHomeRoute = (routers, homeName = config.homeName) => {
   let i = -1
   let len = routers.length
   let homeRoute = {}

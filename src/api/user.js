@@ -26,6 +26,13 @@ export const getUserInfo = () => {
   })
 }
 
+export const getUserCenter = () => {
+  return axios.request({
+    url: '/api/current-user',
+    method: 'get'
+  })
+}
+
 export const logout = () => {
   return axios.request({
     url: '/api/logout',

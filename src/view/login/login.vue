@@ -36,17 +36,17 @@ export default {
           this.$router.push({
             name: this.$config.homeName
           });
-          callback()
+          callback(true)
         }).catch(error => {
           setTimeout(() => {
             this.loginError = error
-            callback()
+            callback(false)
           }, 500)
         });
       }).catch(error => {
         setTimeout(() => {
           this.loginError = error
-          callback()
+          callback(false)
         }, 500)
       });
     }

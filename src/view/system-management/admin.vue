@@ -1,15 +1,15 @@
 <template>
   <management
-    style="background-color: white; height: 100%;"
     ref="admin"
-    :tableColumns="columns1"
-    :data="{table: '/api/admin/list' }"
+    :table-columns="columns"
+    :data="{ table: '/api/admin/list' }"
     page-name="管理员"
-    add-button
-    refresh-button
-    @submit="submit"
-    @delete="deleteRow"
-    @refresh="search"
+    add-button="/api/admin/ POST"
+    refresh-button="/api/admin/list GET"
+    @submit="submit($event, '/api/admin/')"
+    @delete="deleteRow($event, '/api/admin/')"
+    @refresh="search('admin')"
+    @closeModal="isEdit = false"
   >
     <Form
       ref="searchForm"
@@ -19,23 +19,27 @@
       slot="searchForm"
     >
       <FormItem
-        prop="username"
-        label="管理员名称"
+        prop="userName"
+        label-for="admin-search-form-userName"
+        label="管理员帐号"
       >
-        <Input
+        <i-input
           type="text"
-          v-model="searchForm.username"
-          placeholder="输入管理员名称搜索"
-        >
-        </Input>
+          style="width: 162px;"
+          v-model="searchForm.userName"
+          element-id="admin-search-form-userName"
+          placeholder="输入管理员帐号搜索"
+        />
       </FormItem>
       <FormItem>
         <Button
           type="primary"
           icon="md-search"
-          @click="search"
+          v-permission="'/api/admin/list GET'"
+          @click="search('admin')"
         >搜索</Button>
         <Button
+          icon="ios-redo"
           @click="$refs.searchForm.resetFields()"
           style="margin-left: 8px"
         >重置</Button>
@@ -49,50 +53,115 @@
       slot="modalForm"
     >
       <FormItem
-        label="管理员名称"
+        label="管理帐号"
         prop="username"
+        label-for="admin-modal-form-username"
       >
         <i-input
+          :disabled="isEdit ? true:false"
           v-model="modalForm.username"
-          placeholder="管理员名称"
-        ></i-input>
+          element-id="admin-modal-form-username"
+          placeholder="请输入管理帐号"
+        />
       </FormItem>
       <FormItem
         label="邮箱"
         prop="email"
+        label-for="admin-modal-form-email"
       >
         <i-input
+          type="email"
           v-model="modalForm.email"
-          placeholder="字典描述"
-        ></i-input>
+          element-id="admin-modal-form-email"
+          placeholder="请输入邮箱"
+        />
       </FormItem>
       <FormItem
         label="手机号码"
         prop="mobile"
+        label-for="admin-modal-form-mobile"
       >
         <i-input
           v-model="modalForm.mobile"
-          placeholder="手机号码"
-        ></i-input>
+          element-id="admin-modal-form-mobile"
+          placeholder="请输入手机号码"
+        />
       </FormItem>
       <FormItem
-        label="字典值"
-        prop="value"
+        label="密码"
+        prop="password"
+        label-for="admin-modal-form-password"
+        v-if="!isEdit"
       >
         <i-input
-          v-model="modalForm.value"
-          placeholder="类型描述"
-        ></i-input>
+          v-model="modalForm.password"
+          element-id="admin-modal-form-password"
+          placeholder="请输入初始密码"
+        />
+      </FormItem>
+      <FormItem
+        label="姓氏"
+        prop="firstName"
+        label-for="admin-modal-form-firstName"
+      >
+        <i-input
+          v-model="modalForm.firstName"
+          element-id="admin-modal-form-firstName"
+          placeholder="请输入姓氏"
+        />
+      </FormItem>
+      <FormItem
+        label="名字"
+        prop="lastName"
+        label-for="admin-modal-form-lastName"
+      >
+        <i-input
+          v-model="modalForm.lastName"
+          element-id="admin-modal-form-lastName"
+          placeholder="请输入名字"
+        />
+      </FormItem>
+      <FormItem
+        label="性别"
+        prop="gender"
+        label-for="admin-modal-form-gender"
+      >
+        <i-select
+          v-model="modalForm.gender"
+          element-id="admin-modal-form-gender"
+          placeholder="请选择性别"
+        >
+          <i-option :value="0">未知</i-option>
+          <i-option :value="1">男</i-option>
+          <i-option :value="2">女</i-option>
+        </i-select>
+      </FormItem>
+      <FormItem
+        label="角色"
+        prop="roles"
+      >
+        <i-select
+          v-model="modalForm.roles"
+          multiple
+        >
+          <i-option
+            v-for="item in roles"
+            :value="item.value"
+            :key="item.value"
+          >{{ item.label }}</i-option>
+        </i-select>
       </FormItem>
       <FormItem
         label="备注"
         prop="remark"
+        label-for="admin-modal-form-remark"
       >
         <i-input
-          v-model="modalForm.remark"
           type="textarea"
-          placeholder="备注"
-        ></i-input>
+          v-model="modalForm.remark"
+          element-id="admin-modal-form-remark"
+          placeholder="请输入备注"
+        />
       </FormItem>
     </Form>
   </management>
@@ -100,28 +169,118 @@
 
 <script>
 import management from "_c/management";
-import { getInfo, setActivated } from "@/api/system-management";
+import managementHelp from "./mixin";
+import { getInfo } from "@/api/system-management";
 export default {
   name: "admin",
   components: {
     management
   },
+  mixins: [managementHelp],
   data() {
     return {
-      searchForm: {
-        username: ""
-      },
-      columns1: [
+      cityList: [
         {
-          title: "管理员名称",
+          value: "001",
+          label: "New York"
+        },
+        {
+          value: "002",
+          label: "London"
+        },
+        {
+          value: "003",
+          label: "Sydney"
+        },
+        {
+          value: "004",
+          label: "Ottawa"
+        },
+        {
+          value: "005",
+          label: "Paris"
+        },
+        {
+          value: "006",
+          label: "Canberra"
+        }
+      ],
+      isEdit: true,
+      searchForm: {
+        userName: ""
+      },
+      columns: [
+        {
+          title: "管理员账号",
           key: "username",
-          width: 220,
+          minWidth: 100,
           tooltip: true
+        },
+        {
+          title: "姓名",
+          key: "name",
+          minWidth: 100,
+          tooltip: true,
+          render: (h, { row }) => {
+            return h("span", row.firstName + row.lastName);
+          }
         },
         {
           title: "邮箱",
           key: "email",
-          width: 320,
+          minWidth: 120,
+          tooltip: true
+        },
+        {
+          title: "手机号码",
+          key: "mobile",
+          minWidth: 120,
+          tooltip: true
+        },
+        {
+          title: "性别",
+          key: "gender",
+          minWidth: 80,
+          tooltip: true,
+          render: (h, { row }) => {
+            return h(
+              "span",
+              row.gender.value == 0
+                ? "未知"
+                : row.gender.value == 1
+                ? "男"
+                : "女"
+            );
+          }
+        },
+        {
+          title: "最后登录时间",
+          key: "lastLoginTime",
+          minWidth: 120,
+          tooltip: true
+        },
+        {
+          title: "创建时间",
+          key: "createdDate",
+          minWidth: 100,
+          tooltip: true
+        },
+        {
+          title: "最后修改时间",
+          key: "lastModifiedDate",
+          minWidth: 110,
+          tooltip: true
+        },
+        {
+          title: "重置日期",
+          key: "resetDate",
+          minWidth: 110,
+          tooltip: true
+        },
+        {
+          title: "备注",
+          key: "remark",
+          minWidth: 100,
           tooltip: true
         },
         {
@@ -134,40 +293,11 @@ export default {
           }
         },
         {
-          title: "创建人",
-          key: "createdBy",
-          minWidth: 80,
-          tooltip: true
-        },
-        {
-          title: "创建时间",
-          key: "createdDate",
-          minWidth: 100,
-          tooltip: true
-        },
-        {
-          title: "最后修改人",
-          key: "lastModifiedBy",
-          minWidth: 100,
-          tooltip: true
-        },
-        {
-          title: "最后修改时间",
-          key: "lastModifiedDate",
-          minWidth: 110,
-          tooltip: true
-        },
-        {
-          title: "备注",
-          key: "remark",
-          minWidth: 100,
-          tooltip: true
-        },
-        {
-          title: "Action",
+          title: "操作",
           key: "action",
           fixed: "right",
-          width: 200,
+          minWidth: 270,
+          align: "center",
           render: (h, { row }) => {
             return h("div", [
               h(
@@ -179,9 +309,16 @@ export default {
                   },
                   on: {
                     click: () => {
-                      this.edit(row);
+                      this.isEdit = true;
+                      this.edit(`/api/admin/info/${row.id}`, "admin");
                     }
                   },
+                  directives: [
+                    {
+                      name: "permission",
+                      value: "/api/admin/ PUT"
+                    }
+                  ],
                   style: {
                     marginRight: "10px"
                   }
@@ -197,9 +334,15 @@ export default {
                   },
                   on: {
                     click: () => {
-                      this.delete(row);
+                      this.$refs.admin.delete(row);
                     }
                   },
+                  directives: [
+                    {
+                      name: "permission",
+                      value: "/api/admin/ DELETE"
+                    }
+                  ],
                   style: {
                     marginRight: "10px"
                   }
@@ -207,18 +350,44 @@ export default {
                 "删除"
               ),
               h(
+                "Button",
+                {
+                  props: {
+                    type: "warning",
+                    size: "small",
+                    disabled:true
+                  },
+                  on: {
+                    click: () => {
+                      // this.$refs.admin.delete(row);
+                    }
+                  },
+                  style: {
+                    marginRight: "10px"
+                  }
+                },
+                "重置密码"
+              ),
+              h(
                 "i-switch",
                 {
                   props: {
                     size: "large",
-                    value: row.activated,
-                    loading: row.activated_loading
+                    value: !row.activated,
+                    loading: row.activated_loading,
+                    disabled:true
                   },
                   on: {
                     "on-change": value => {
-                      this.changeActivated(row, value);
+                      this.changeActivated(row, value, "/api/admin/");
                     }
-                  }
+                  },
+                  directives: [
+                    {
+                      name: "permission",
+                      value: "/api/admin/ PUT"
+                    }
+                  ]
                 },
                 [
                   h("span", { slot: "open" }, "启用"),
@@ -229,88 +398,47 @@ export default {
           }
         }
       ],
+      roles: [],
       modalForm: {
-        activated: '',
-        avatar: "",
-        createdBy: 0,
-        createdDate: "",
-        deleted: false,
+        username: "",
+        roles: [],
         email: "",
-        firstName: "",
-        gender: "",
-        id: 0,
-        lastLoginTime: "",
-        lastModifiedBy: 0,
-        lastModifiedDate: "",
-        lastName: "",
         mobile: "",
-        orgs: [],
-        password: "",
-        remark: "",
-        resetDate: "",
-        status: "",
-        username: ""
+        password: "123456",
+        firstName: "",
+        lastName: "",
+        gender: "",
+        remark: ""
       },
-      modalRules:{
-
+      modalRules: {
+        username: {
+          required: this.isEdit ? true : false,
+          message: "管理员帐号必填"
+        },
+        password: { required: true, message: "密码必填" },
+        email: { type: "email", message: "邮箱格式不正确", trigger: "blur" },
+        roles: { type: "array", required: true, message: "角色必须选择" },
+        mobile: {
+          trigger: "blur",
+          validator(rule, value, callback) {
+            if (value && !/^1[345789]\d{9}$/.test(value.trim())) {
+              callback(new Error("手机号码格式不正确"));
+            } else {
+              callback();
+            }
+          }
+        }
       }
     };
   },
-  methods: {
-    state() {},
-    submit(pid, request) {
-      // 添加和保存时，参数的处理
-      let param = Object.assign({}, this.modalForm);
-      param.activated = !!param.activated;
-      param.pid = pid;
-      request("/api/admin/", param, param.id ? "put" : "post");
-    },
-    deleteRow(request) {
-      request("/api/admin/");
-    },
-    edit({ id }) {
-      // 编辑时，表单的回显
-      getInfo("/api/admin/info/" + id)
-        .then(data => {
-          Object.assign(this.modalForm, data, {
-            activated: data.activated ? 1 : 0
-          });
-          this.$refs.admin.edit();
-        })
-        .catch(error => {
-          this.$Notice.error({
-            title: "打开编辑失败",
-            desc: error
-          });
-        });
-    },
-    search() {
-      // 查询时，处理查询参数
-      const param = Object.assign({}, this.searchForm);
-      for (let i in param) {
-        param[i] === "" && delete param[i];
+  mounted() {
+    getInfo("/api/role/own").then(data => {
+      for (var i = 0; i < data.length; i++) {
+        data[i].value = data[i].id;
+        data[i].label = data[i].name;
       }
-      this.$refs.admin.setTableData(param);
-    },
-    changeActivated(row, value) {
-      row.activated = value;
-      row.activated_loading = true;
-      setActivated('/api/adim/', row)
-        .then(() => {
-          row.activated_loading = false;
-        })
-        .catch(error => {
-          row.activated = !value;
-          row.activated_loading = false;
-          this.$Notice.error({
-            title: "状态修改失败",
-            desc: error
-          });
-        });
-    }
+      this.roles = data;
+    });
   }
 };
 </script>
-
-<style>
-</style>

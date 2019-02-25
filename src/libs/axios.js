@@ -11,8 +11,10 @@ class HttpRequest {
   getInsideConfig(options) {
     const config = {
       baseURL: this.baseUrl,
-      timeout: options.timeout || 5000,
-      headers: {
+      timeout: options.timeout || 5000
+    }
+    if (store.state.user.token) {
+      config.headers = {
         Authorization: store.state.user.token
       }
     }
@@ -49,7 +51,7 @@ class HttpRequest {
       // 请求成功处理（包括后台异常）
       if (status === 200 && data.success && data.data) {
         if (url === '/api/login') {
-          data.data = { data: data.data, token: headers.authorization }
+          data.data.token = headers.authorization
         }
         return data.data
       } else {

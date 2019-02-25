@@ -1,20 +1,17 @@
-.trans{
+.trans {
   transition: transform .2s ease;
 }
-@size: 40px;
-.sider-trigger-a{
-  padding: 6px;
-  width: @size;
-  height: @size;
-  display: inline-block;
-  text-align: center;
+
+.sider-trigger-a {
+  float: left;
+  display: block;
   color: #5c6b77;
-  margin-top: 12px;
-  i{
+  i {
     .trans;
+    margin-top: 20px;
     vertical-align: top;
   }
-  &.collapsed i{
+  &.collapsed i {
     transform: rotateZ(90deg);
     .trans;
   }

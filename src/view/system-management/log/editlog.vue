@@ -1,52 +1,37 @@
 <template>
   <!-- 操作日志 -->
   <management
-    style="background-color: white; height: 100%; padding: 10px;"
     ref="editlog"
-    :tableColumns="columns1"
-    :data="{table: '/api/oper-log/list' }"
+    :table-columns="columns"
+    :data="{ table: '/api/oper-log/list' }"
     page-name="操作日志"
   >
-    <Form
-      ref="searchForm"
-      :model="searchForm"
-      :label-width="80"
-      inline
-      slot="searchForm"
-    >
-      <FormItem prop="IP" label="IP">
-        <Input
-          type="text"
+    <Form ref="searchForm" :model="searchForm" :label-width="80" inline slot="searchForm">
+      <FormItem prop="IP" label="IP" label-for="editlog-search-form-IP">
+        <i-input
           v-model="searchForm.IP"
+          type="text"
+          element-id="editlog-search-form-IP"
+          style="width: 162px"
           placeholder="输入IP搜索"
-        >
-        </Input>
+        />
       </FormItem>
-      <FormItem
-        label="操作类型"
-        prop="typeid"
-      >
-        <Select
-          style="width:200px"
-          @on-change="changeaction"
+      <FormItem label="操作类型" prop="typeid" label-for="editlog-search-form-typeid">
+        <i-select
+          v-model="searchForm.typeid"
+          style="width: 162px"
+          element-id="editlog-search-form-typeid"
         >
-          <Option
+          <i-option
             v-for="item in typeidList"
             :value="item.value"
             :key="item.value"
-          >{{ item.label }}</Option>
-        </Select>
+          >{{ item.label }}</i-option>
+        </i-select>
       </FormItem>
       <FormItem>
-        <Button
-          type="primary"
-          icon="md-search"
-          @click="search()"
-        >查询</Button>
-        <Button
-          @click="$refs.searchForm.resetFields()"
-          style="margin-left: 8px"
-        >重置</Button>
+        <Button type="primary" icon="md-search" @click="search('editlog')">查询</Button>
+        <Button icon="ios-redo" @click="$refs.searchForm.resetFields()" style="margin-left: 8px">重置</Button>
       </FormItem>
     </Form>
   </management>
@@ -54,46 +39,54 @@
 
 <script>
 import management from "_c/management";
+import managementHelp from "../mixin";
 export default {
   name: "editlog",
-   components: {
+  components: {
     management
   },
+  mixins: [managementHelp],
   data() {
     return {
       searchForm: {
         IP: "",
-        typeid: "",
+        typeid: ""
       },
-      columns1: [
+      columns: [
         {
           title: "IP",
           key: "IP",
+          minWidth: 80,
           tooltip: true
         },
         {
           title: "操作类型",
           key: "ACTION_TYPE",
+          minWidth: 80,
           tooltip: true
         },
         {
           title: "操作者",
           key: "USER_NAME",
+          minWidth: 80,
           tooltip: true
         },
         {
           title: "操作时间",
           key: "ADD_TIME",
+          minWidth: 80,
           tooltip: true
         },
         {
           title: "终端",
           key: "PLATFORM_ID",
+          minWidth: 80,
           tooltip: true
         },
         {
           title: "操作简介",
           key: "DESC",
+          minWidth: 80,
           tooltip: true
         }
       ],
@@ -172,17 +165,6 @@ export default {
         }
       ]
     };
-  },
-  methods: {
-    changeaction(e) {
-      this.searchForm.typeid = e
-    },
-    search() {
-      // 查询时，处理查询参数
-      const param = Object.assign({}, this.searchForm);
-      console.log(param)
-      this.$refs.editlog.setTableData(param);
-    }
   }
 };
 </script>

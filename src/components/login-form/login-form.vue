@@ -75,7 +75,7 @@ export default {
       url: "",
       uniqueId: "",
       form: {
-        userName: "admin",
+        userName: "",
         password: "",
         code: ""
       },
@@ -119,8 +119,9 @@ export default {
             password: this.form.password,
             code: this.form.code,
             uniqueId: this.uniqueId,
-            callback: () => {
+            callback: val => {
               this.loading = false;
+              !val && this.changecode();
             }
           });
         }

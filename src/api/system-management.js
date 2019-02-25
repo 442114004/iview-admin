@@ -32,14 +32,14 @@ export const addTableData = (url, data = {}, method = 'post') => {
 }
 
 export const deleteTableData = (url, id) => {
-  let params=null
-  if(url =="/api/org/"){
-   params= {
+  let params = null
+  if (url == "/api/org/") {
+    params = {
       orgId: id
     }
-  }else{
-    params= {
-      id: id
+  } else {
+    params = {
+      id
     }
   }
   return axios.request({
@@ -57,19 +57,32 @@ export const getInfo = url => {
   })
 }
 
-export const setActivated = (url, row) => {
-  if(url == '/api/dictionary/isActivated/'){
-    url+=row.id
+export const setActivated = (url, data) => {
+  if (url == '/api/dictionary/isActivated/') {
+    url += data.id
     return axios.request({
       url,
       method: 'get'
     })
-  }else{
-    let data =  Object.assign({},row)
+  } else {
     return axios.request({
       url,
       method: 'put',
       data
     })
   }
+}
+
+export const setIsLocked = url => {
+  return axios.request({
+    url,
+    method: 'get'
+  })
+}
+
+export const resetPassword = id => {
+  return axios.request({
+    url: `/api/user/resetPassword/${id}`,
+    method: 'get'
+  })
 }

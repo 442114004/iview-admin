@@ -6,33 +6,37 @@
 </template>
 
 <script>
-import './error.less'
+import "./error.less";
 export default {
-  name: 'backBtnGroup',
-  data () {
+  name: "backBtnGroup",
+  data() {
     return {
       second: 5,
       timer: null
-    }
+    };
   },
   methods: {
-    backHome () {
+    backHome() {
       this.$router.replace({
         name: this.$config.homeName
-      })
+      });
     },
-    backPrev () {
-      this.$router.go(-1)
+    backPrev() {
+      window.history.length > 1
+        ? this.$router.go(-1)
+        : this.$router.replace({
+            name: this.$config.homeName
+          });
     }
   },
-  mounted () {
+  mounted() {
     this.timer = setInterval(() => {
-      if (this.second === 0) this.backPrev()
-      else this.second--
-    }, 1000)
+      if (this.second === 0) this.backPrev();
+      else this.second--;
+    }, 1000);
   },
-  beforeDestroy () {
-    clearInterval(this.timer)
+  beforeDestroy() {
+    clearInterval(this.timer);
   }
-}
+};
 </script>
