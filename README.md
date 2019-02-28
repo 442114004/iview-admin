@@ -1,4 +1,4 @@
-# vlink-admin
+# vlink-admin（基于iview-admin的后台基础平台）
 
 ## Project setup
 ```
@@ -15,15 +15,5 @@ npm run serve
 npm run build
 ```
 
-### Run your tests
-```
-npm run test
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+## 说明
+iview-admin移植到@vue/cli上，兼容IE11，实现动态菜单，精简多余iview-admin代码
